@@ -10,7 +10,6 @@
   --blue:#1a4f8a;--blue-light:#e8f0fb;--blue-mid:#3a72c0;
   --green:#1a6b3a;--green-light:#e6f4ec;
   --amber:#b85c00;--amber-light:#fff3e0;
-  --red:#8b1a00;
   --bg:#f7f9fc;--card:#fff;--border:#dde3ee;
   --text:#1a1f2e;--muted:#6b7694;
   --radius:10px;--shadow:0 2px 8px rgba(0,0,0,.08);
@@ -19,23 +18,24 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min
 
 /* ── Nav ── */
 nav{background:var(--blue);padding:0 16px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.brand{color:#fff;font-weight:700;font-size:1.05rem;padding:12px 8px 12px 0;margin-right:6px;white-space:nowrap;letter-spacing:-.2px}
-.tab-btn{background:none;border:none;color:rgba(255,255,255,.75);padding:12px 13px;cursor:pointer;font-size:.88rem;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
+.brand{color:#fff;font-weight:700;font-size:1.05rem;padding:12px 8px 12px 0;margin-right:6px;white-space:nowrap}
+.tab-btn{background:none;border:none;color:rgba(255,255,255,.75);padding:12px 12px;cursor:pointer;font-size:.85rem;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
 .tab-btn:hover{color:#fff;background:rgba(255,255,255,.08)}
 .tab-btn.active{color:#fff;border-bottom-color:#7eb8ff}
-.search-wrap{flex:1;min-width:180px;max-width:380px;margin:6px 0 6px 8px;position:relative}
-#main-search{width:100%;padding:7px 34px 7px 12px;border:none;border-radius:20px;font-size:.9rem;outline:none;background:rgba(255,255,255,.15);color:#fff}
+.search-wrap{flex:1;min-width:160px;max-width:340px;margin:6px 0 6px 8px;position:relative}
+#main-search{width:100%;padding:7px 34px 7px 12px;border:none;border-radius:20px;font-size:.88rem;outline:none;background:rgba(255,255,255,.15);color:#fff}
 #main-search::placeholder{color:rgba(255,255,255,.55)}
 #main-search:focus{background:rgba(255,255,255,.22)}
 .search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:1rem;display:none}
 
-/* ── Layout ── */
+/* ── Views ── */
 .view{display:none;padding:20px 16px;max-width:1200px;margin:0 auto}
 .view.active{display:block}
 
 /* ── Cards ── */
 .page-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
 .page-card:hover{box-shadow:var(--shadow)}
+.page-card.expanded{border-color:var(--blue-mid);cursor:default}
 .page-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px;align-items:center}
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:600;white-space:nowrap}
 .badge-grade{background:var(--blue-light);color:var(--blue)}
@@ -44,20 +44,23 @@ nav{background:var(--blue);padding:0 16px;display:flex;align-items:center;gap:4p
 .badge-page{background:#f0f0f0;color:var(--muted)}
 .page-card-text{font-size:.87rem;line-height:1.6;color:#2a2a3a;max-height:120px;overflow:hidden;mask-image:linear-gradient(to bottom,black 70%,transparent)}
 .page-card-text mark{background:#fff176;border-radius:2px;padding:0 1px}
+.page-card-scan{margin-top:10px;display:none}
+.page-card-scan img{max-width:100%;border-radius:6px;border:1px solid var(--border)}
+.scan-btn{font-size:.72rem;padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:var(--card);cursor:pointer;color:var(--muted);margin-left:auto}
+.scan-btn:hover{background:var(--blue-light);color:var(--blue);border-color:var(--blue-mid)}
 
-/* ── Search results header ── */
+/* ── Results header ── */
 .results-header{color:var(--muted);font-size:.85rem;margin-bottom:12px;display:flex;align-items:center;gap:10px}
 .filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .filter-chip{padding:4px 12px;border-radius:16px;border:1px solid var(--border);background:var(--card);font-size:.82rem;cursor:pointer;color:var(--muted);transition:all .12s}
 .filter-chip.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .filter-chip:hover:not(.active){background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
 
-/* ── Grade tab ── */
+/* ── Grades ── */
 .grade-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
 .grade-pill{padding:10px 22px;border-radius:24px;border:2px solid var(--border);background:var(--card);cursor:pointer;font-size:.95rem;font-weight:600;color:var(--muted);transition:all .15s}
 .grade-pill:hover{border-color:var(--blue-mid);color:var(--blue)}
 .grade-pill.active{background:var(--blue);border-color:var(--blue);color:#fff}
-
 .subject-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .subject-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .15s;text-align:center}
 .subject-card:hover{box-shadow:var(--shadow);border-color:var(--blue-mid)}
@@ -78,6 +81,12 @@ nav{background:var(--blue);padding:0 16px;display:flex;align-items:center;gap:4p
 .ch-item{padding:5px 8px;border-radius:6px;cursor:pointer;font-size:.83rem;color:var(--muted);transition:background .1s}
 .ch-item:hover{background:var(--blue-light);color:var(--blue)}
 .ch-item.active{background:var(--blue-light);color:var(--blue);font-weight:600}
+
+/* ── Page viewer + scan ── */
+.page-viewer-wrap{position:relative}
+.page-view-toggle{display:flex;gap:6px;margin-bottom:10px;align-items:center}
+.pv-btn{padding:5px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;font-size:.82rem;color:var(--muted)}
+.pv-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
 #page-viewer{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;min-height:400px}
 #page-viewer .ocr-page{font-family:Georgia,serif;font-size:.95rem;line-height:1.8;color:#1a1a2e}
 #page-viewer .ocr-page h3{font-size:1.05rem;font-weight:700;margin:16px 0 6px;color:var(--blue)}
@@ -87,6 +96,8 @@ nav{background:var(--blue);padding:0 16px;display:flex;align-items:center;gap:4p
 #page-viewer .ocr-page table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.85rem}
 #page-viewer .ocr-page td,#page-viewer .ocr-page th{border:1px solid var(--border);padding:4px 8px}
 #page-viewer .ocr-page th{background:var(--blue-light);font-weight:600}
+#page-scan-viewer{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);min-height:400px;display:none;text-align:center;padding:12px}
+#page-scan-viewer img{max-width:100%;border-radius:4px;cursor:zoom-in}
 .book-search-wrap{display:flex;gap:8px;margin-bottom:12px;align-items:center}
 .book-search-wrap input{flex:1;padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:.85rem;outline:none}
 .book-search-wrap input:focus{border-color:var(--blue-mid)}
@@ -98,6 +109,11 @@ nav{background:var(--blue);padding:0 16px;display:flex;align-items:center;gap:4p
 .page-nav button:disabled{opacity:.4;cursor:default}
 .page-counter{font-size:.85rem;color:var(--muted)}
 
+/* ── Fullscreen scan ── */
+#scan-fullscreen{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out}
+#scan-fullscreen.open{display:flex}
+#scan-fullscreen img{max-width:95vw;max-height:95vh;object-fit:contain;border-radius:4px}
+
 /* ── Topics ── */
 .topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .topic-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:box-shadow .15s}
@@ -106,28 +122,31 @@ nav{background:var(--blue);padding:0 16px;display:flex;align-items:center;gap:4p
 .topic-card .topic-words{font-size:.78rem;color:var(--muted);margin-bottom:8px}
 .topic-card .topic-subjects{display:flex;flex-wrap:wrap;gap:4px}
 .topic-bar{height:4px;background:var(--blue-light);border-radius:2px;margin-bottom:8px;overflow:hidden}
-.topic-bar-fill{height:100%;background:var(--blue-mid);border-radius:2px;transition:width .3s}
+.topic-bar-fill{height:100%;background:var(--blue-mid);border-radius:2px}
 #topic-detail{display:none;margin-top:20px}
 #topic-detail-back{background:none;border:none;color:var(--blue);cursor:pointer;font-size:.88rem;margin-bottom:12px;padding:0}
+.topic-search-wrap{margin-bottom:14px}
+.topic-search-wrap input{width:100%;padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;outline:none}
+.topic-search-wrap input:focus{border-color:var(--blue-mid)}
 
-/* ── Progression ── */
-.prog-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
-.prog-section h3{font-size:.9rem;font-weight:600;margin-bottom:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.prog-chart{display:flex;align-items:flex-end;gap:6px;height:120px;margin-bottom:10px}
-.prog-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}
-.prog-bar{width:100%;background:var(--blue-mid);border-radius:4px 4px 0 0;min-height:2px;transition:height .3s;cursor:pointer;position:relative}
-.prog-bar:hover{background:var(--blue);filter:brightness(1.1)}
-.prog-bar-label{font-size:.7rem;color:var(--muted);margin-top:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.prog-cowords{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.coword-chip{padding:3px 10px;border-radius:12px;background:var(--blue-light);color:var(--blue);font-size:.78rem;cursor:pointer}
-.coword-chip:hover{background:var(--blue);color:#fff}
-.prog-search-wrap{display:flex;gap:10px;margin-bottom:20px;align-items:center}
-#prog-input{flex:1;padding:9px 14px;border:1px solid var(--border);border-radius:8px;font-size:.95rem;outline:none}
-#prog-input:focus{border-color:var(--blue-mid);box-shadow:0 0 0 2px rgba(58,114,192,.15)}
-#prog-search-btn{padding:9px 20px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9rem}
-#prog-search-btn:hover{background:var(--blue-mid)}
+/* ── Tags ── */
+.tags-toolbar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.tag-filter-input{flex:1;min-width:130px;padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;outline:none}
+.tag-filter-input:focus{border-color:var(--blue-mid)}
+.ttype-btn{font-size:.78rem;padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;color:var(--muted)}
+.ttype-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tag-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.tag-col{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.tag-col h4{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.tag-list{max-height:320px;overflow-y:auto}
+.tag-row{display:flex;justify-content:space-between;align-items:center;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:.83rem}
+.tag-row:hover{background:var(--blue-light);color:var(--blue)}
+.tag-count{font-size:.72rem;color:var(--muted);background:#f0f0f4;padding:1px 6px;border-radius:8px}
+#tags-results{margin-top:4px}
+.back-link{font-size:.85rem;color:var(--blue);cursor:pointer;border:none;background:none;margin-bottom:14px;display:inline-block;padding:0}
+.back-link:hover{text-decoration:underline}
 
-/* ── Subjects tab ── */
+/* ── Subjects ── */
 .subjects-matrix{overflow-x:auto}
 table.sm-table{width:100%;border-collapse:collapse;font-size:.83rem}
 table.sm-table th{background:var(--blue);color:#fff;padding:8px 12px;text-align:left;white-space:nowrap}
@@ -139,6 +158,49 @@ table.sm-table tr:hover td{background:var(--blue-light)}
 .sm-dot-no{background:#eee;color:transparent}
 .subject-row-label{font-weight:600;cursor:pointer;color:var(--blue)}
 .subject-row-label:hover{text-decoration:underline}
+
+/* ── Progression ── */
+.prog-header{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+#prog-input{flex:1;min-width:160px;padding:9px 14px;border:1px solid var(--border);border-radius:8px;font-size:.95rem;outline:none}
+#prog-input:focus{border-color:var(--blue-mid);box-shadow:0 0 0 2px rgba(58,114,192,.15)}
+#prog-search-btn{padding:9px 20px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9rem}
+#prog-search-btn:hover{background:var(--blue-mid)}
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.view-toggle-btn{padding:7px 14px;border:none;background:var(--card);cursor:pointer;font-size:.8rem;color:var(--muted)}
+.view-toggle-btn.active{background:var(--blue);color:#fff}
+
+.prog-layout{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start}
+@media(max-width:680px){.prog-layout{grid-template-columns:1fr}}
+
+.drift-sidebar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;position:sticky;top:68px;max-height:calc(100vh - 100px);overflow-y:auto}
+.drift-sidebar h4{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.drift-input{width:100%;padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:.8rem;margin-bottom:8px;outline:none}
+.drift-input:focus{border-color:var(--blue-mid)}
+.drift-word{display:flex;justify-content:space-between;align-items:center;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:.83rem;margin-bottom:2px}
+.drift-word:hover{background:var(--blue-light);color:var(--blue)}
+.drift-word.active{background:var(--blue);color:#fff}
+.drift-score{font-size:.68rem;opacity:.6;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px}
+.drift-word.active .drift-score{background:rgba(255,255,255,.25);opacity:1}
+
+.prog-main{}
+.prog-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.prog-section h3{font-size:.9rem;font-weight:600;margin-bottom:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+/* frequency bars */
+.prog-chart{display:flex;align-items:flex-end;gap:6px;height:120px;margin-bottom:10px}
+.prog-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}
+.prog-bar{width:100%;background:var(--blue-mid);border-radius:4px 4px 0 0;min-height:2px;transition:height .3s;cursor:pointer;position:relative}
+.prog-bar:hover{filter:brightness(1.15)}
+.prog-bar-label{font-size:.65rem;color:var(--muted);margin-top:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog-bar-val{font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px}
+
+/* line chart */
+.prog-line-wrap{width:100%;overflow:hidden;border-radius:4px;background:#f8fafd;padding:10px 0}
+#prog-line-svg{width:100%;display:block}
+
+.prog-cowords{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.coword-chip{padding:3px 10px;border-radius:12px;background:var(--blue-light);color:var(--blue);font-size:.78rem;cursor:pointer}
+.coword-chip:hover{background:var(--blue);color:#fff}
 
 /* ── Misc ── */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
@@ -157,6 +219,9 @@ table.sm-table tr:hover td{background:var(--blue-light)}
   <button class="tab-btn"        onclick="switchTab('grades')"      id="tab-grades">Grades</button>
   <button class="tab-btn"        onclick="switchTab('subjects')"    id="tab-subjects">Subjects</button>
   <button class="tab-btn"        onclick="switchTab('topics')"      id="tab-topics">Topics</button>
+  <button class="tab-btn"        onclick="switchTab('tags')"        id="tab-tags">Tags</button>
+  <button class="tab-btn"        onclick="switchTab('bias')"        id="tab-bias">Bias</button>
+  <button class="tab-btn"        onclick="switchTab('map')"         id="tab-map">Map</button>
   <button class="tab-btn"        onclick="switchTab('progression')" id="tab-progression">Progression</button>
   <div class="search-wrap">
     <input id="main-search" type="search" placeholder="Search textbooks…" oninput="onSearchInput(this.value)">
@@ -195,7 +260,16 @@ table.sm-table tr:hover td{background:var(--blue-light)}
           <button onclick="bookSearchNext()" id="book-search-next" style="display:none">Next ↓</button>
           <button onclick="bookSearchClear()" id="book-search-clear" style="display:none">✕</button>
         </div>
-        <div id="page-viewer"><div id="page-content" class="ocr-page"></div></div>
+        <div class="page-view-toggle">
+          <button class="pv-btn active" id="pv-text-btn" onclick="setPageView('text')">📄 Text</button>
+          <button class="pv-btn" id="pv-scan-btn" onclick="setPageView('scan')">📷 Scan</button>
+        </div>
+        <div class="page-viewer-wrap">
+          <div id="page-viewer"><div id="page-content" class="ocr-page"></div></div>
+          <div id="page-scan-viewer">
+            <img id="page-scan-img" src="" alt="Page scan" onclick="openScanFullscreen()" onerror="this.parentElement.innerHTML='<div class=\'empty\' style=\'padding:40px\'><div class=\'empty-icon\'>🖼️</div><div>Scan not available for this page</div></div>'">
+          </div>
+        </div>
         <div class="page-nav">
           <button onclick="prevPage()" id="btn-prev">← Prev</button>
           <span class="page-counter" id="page-counter"></span>
@@ -213,9 +287,7 @@ table.sm-table tr:hover td{background:var(--blue-light)}
     <div class="subjects-matrix" id="subjects-matrix"></div>
   </div>
   <div id="subject-detail" style="display:none">
-    <div style="margin-bottom:12px">
-      <button onclick="backToSubjectMatrix()" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:.88rem;padding:0">← All Subjects</button>
-    </div>
+    <button onclick="backToSubjectMatrix()" class="back-link">← All Subjects</button>
     <div class="section-title" id="subject-detail-title"></div>
     <div class="subject-grid" id="subject-detail-grid"></div>
   </div>
@@ -223,34 +295,114 @@ table.sm-table tr:hover td{background:var(--blue-light)}
 
 <!-- Topics -->
 <div class="view" id="view-topics">
-  <div class="filter-row" id="topics-filter-row"></div>
-  <div class="topic-grid" id="topic-grid"></div>
-  <div id="topic-detail">
+  <div id="topics-overview">
+    <div class="topic-search-wrap">
+      <input type="search" id="topic-filter-input" placeholder="Filter topics…" oninput="filterTopicCards(this.value)">
+    </div>
+    <div class="topic-grid" id="topic-grid"></div>
+  </div>
+  <div id="topic-detail" style="display:none">
     <button id="topic-detail-back" onclick="backToTopics()">← All Topics</button>
     <div class="section-title" id="topic-detail-title"></div>
+    <div class="topic-search-wrap">
+      <input type="search" id="topic-subset-search" placeholder="Search within topic…" oninput="filterTopicPages(this.value)">
+    </div>
     <div id="topic-detail-pages"></div>
+  </div>
+</div>
+
+<!-- Tags -->
+<div class="view" id="view-tags">
+  <div id="tags-browser">
+    <div class="tags-toolbar">
+      <input type="text" class="tag-filter-input" id="tag-filter" placeholder="Filter tags…" oninput="filterTags(this.value)">
+      <button class="ttype-btn active" onclick="setTagType('all',this)">All</button>
+      <button class="ttype-btn" onclick="setTagType('subject',this)">Subjects</button>
+      <button class="ttype-btn" onclick="setTagType('grade',this)">Grades</button>
+      <button class="ttype-btn" onclick="setTagType('chapter',this)">Chapters</button>
+    </div>
+    <div class="tag-cols" id="tag-cols"></div>
+  </div>
+  <div id="tags-results" style="display:none">
+    <button class="back-link" onclick="backToTagBrowser()">← All Tags</button>
+    <div class="section-title" id="tags-result-title"></div>
+    <div class="topic-search-wrap">
+      <input type="search" id="tags-subset-search" placeholder="Search within tag…" oninput="filterTagResults(this.value)">
+    </div>
+    <div id="tags-result-list"></div>
   </div>
 </div>
 
 <!-- Progression -->
 <div class="view" id="view-progression">
-  <div class="prog-search-wrap">
-    <input id="prog-input" type="text" placeholder="Enter a word or concept (e.g. democracy, photosynthesis, gravity)…" onkeydown="if(event.key==='Enter')searchProg()">
+  <div class="prog-header">
+    <input id="prog-input" type="text" placeholder="Enter a word (e.g. democracy, acid, gravity)…" onkeydown="if(event.key==='Enter')searchProg()">
     <button id="prog-search-btn" onclick="searchProg()">Explore</button>
+    <div class="view-toggle">
+      <button class="view-toggle-btn active" id="prog-freq-btn" onclick="setProgView('freq')">Bar</button>
+      <button class="view-toggle-btn" id="prog-line-btn" onclick="setProgView('line')">Line</button>
+    </div>
   </div>
-  <div id="prog-result"></div>
-  <div class="empty" id="prog-empty">
-    <div class="empty-icon">📈</div>
-    <div>See how a concept evolves across Grade 1 → 12</div>
-    <div style="margin-top:8px;font-size:.85rem">Try: <em>democracy</em> · <em>photosynthesis</em> · <em>Islam</em> · <em>war</em> · <em>fraction</em></div>
+  <div class="prog-layout">
+    <div class="drift-sidebar">
+      <h4>Most Changed Words</h4>
+      <input type="text" class="drift-input" placeholder="Filter…" id="drift-filter" oninput="filterDriftWords(this.value)">
+      <div id="drift-word-list"><div class="loading"><span class="spinner"></span></div></div>
+    </div>
+    <div class="prog-main">
+      <div id="prog-result"></div>
+      <div class="empty" id="prog-empty">
+        <div class="empty-icon">📈</div>
+        <div>See how a concept evolves across Grade 1 → 12</div>
+        <div style="margin-top:8px;font-size:.85rem">Try: <em onclick="setProgWordAndSearch('democracy')" style="cursor:pointer;color:var(--blue)">democracy</em> · <em onclick="setProgWordAndSearch('photosynthesis')" style="cursor:pointer;color:var(--blue)">photosynthesis</em> · <em onclick="setProgWordAndSearch('acid')" style="cursor:pointer;color:var(--blue)">acid</em> · <em onclick="setProgWordAndSearch('gravity')" style="cursor:pointer;color:var(--blue)">gravity</em></div>
+      </div>
+    </div>
   </div>
+</div>
+
+<!-- Bias -->
+<div class="view" id="view-bias">
+  <div id="bias-overview">
+    <div class="section-title" style="margin-bottom:4px">Representation Bias in PCTB Textbooks</div>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:16px">Words ranked by how strongly they co-occur with male vs. female pronouns. Score 1.0 = exclusively male context, 0.0 = exclusively female context. Function words and pronouns excluded. Note: "He" (helium) may appear in chemistry contexts — use with care.</p>
+    <div class="tags-toolbar">
+      <button class="ttype-btn active" onclick="setBiasView('gender',this)">Gender</button>
+      <button class="ttype-btn" onclick="setBiasView('professions',this)">Professions</button>
+      <button class="ttype-btn" onclick="setBiasView('religions',this)">Religions</button>
+      <button class="ttype-btn" onclick="setBiasView('ethnicities',this)">Ethnicities</button>
+    </div>
+    <div id="bias-content"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+  </div>
+</div>
+
+<!-- Map -->
+<div class="view" id="view-map">
+  <div class="section-title" style="margin-bottom:8px">Pakistan Geography — Textbook Coverage</div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px">Click a region to see textbook pages that mention it.</p>
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start" id="map-layout">
+    <div id="map-svg-wrap" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+      <svg viewBox="0 0 500 520" style="width:100%;display:block" id="pak-map">
+        <!-- simplified Pakistan provinces as clickable regions -->
+        <g id="map-regions"></g>
+      </svg>
+    </div>
+    <div id="map-detail" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div class="empty" style="padding:30px 10px"><div class="empty-icon">🗺️</div><div>Click a region on the map</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Fullscreen scan -->
+<div id="scan-fullscreen" onclick="closeScanFullscreen()">
+  <img id="scan-full-img" src="" alt="Full scan">
 </div>
 
 <script>
 'use strict';
-const JBASE = 'https://raw.githubusercontent.com/osama-website/textbooks/main/json';
-const DATA_VER = '1';
-const CACHE = {};
+const JBASE   = 'https://raw.githubusercontent.com/osama-website/textbooks/main/json';
+const IMG_BASE = 'https://raw.githubusercontent.com/osama-website/textbooks/main/pages';
+const DATA_VER = '2';
+const CACHE    = {};
 
 async function loadJSON(name){
   if(CACHE[name]) return CACHE[name];
@@ -260,7 +412,6 @@ async function loadJSON(name){
     CACHE[name] = await r.json();
     return CACHE[name];
   } catch(e){
-    // Fallback to local
     try{
       const r = await fetch(`json/${name}.json`);
       if(!r.ok) throw new Error(r.status);
@@ -273,20 +424,29 @@ async function loadJSON(name){
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function mark(text, q){
   if(!q) return esc(text);
-  // Escape first, then highlight on the escaped text (avoids double-escaping)
   const escaped = esc(text);
   const words = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').split(/\s+/).filter(Boolean);
   return escaped.replace(new RegExp(`(${words.join('|')})`, 'gi'), '<mark>$1</mark>');
 }
+function safeId(bookId){
+  return bookId.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+}
+function scanUrl(bookId, pdfPage){
+  return `${IMG_BASE}/${safeId(bookId)}_${String(pdfPage).padStart(4,'0')}.webp`;
+}
 
-// ── State ──────────────────────────────────────────────────────────────────
-let booksData=null, pagesData=null, semData=null, clustersData=null;
+// ── State ─────────────────────────────────────────────────────────────────
+let booksData=null, pagesData=null, semData=null, clustersData=null, driftData=null;
 let pageMap={}, bookMap={};
 let currentGrade=null, currentBookId=null, currentBookPages=[], currentPageIdx=0;
-let topicFilter=null;
-let searchQuery='';
+let pageViewMode = 'text';
+let searchQuery='', searchGradeFilter=null, searchSubjectFilter=null;
+let topicPageCache = [];
+let tagPageCache = [], activeTagType = 'all';
+let progViewMode = 'freq';
+let driftWords = [], activeDriftWord = null;
 
-// ── Tab switching ──────────────────────────────────────────────────────────
+// ── Tab switching ─────────────────────────────────────────────────────────
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -295,9 +455,13 @@ function switchTab(tab){
   if(tab==='grades')   initGrades();
   if(tab==='subjects'){ backToSubjectMatrix(); initSubjects(); }
   if(tab==='topics')   initTopics();
+  if(tab==='tags')        initTags();
+  if(tab==='bias')        initBias();
+  if(tab==='map')         initMap();
+  if(tab==='progression') initProgression();
 }
 
-// ── Search ─────────────────────────────────────────────────────────────────
+// ── Search ────────────────────────────────────────────────────────────────
 let searchTimer=null;
 function onSearchInput(val){
   document.getElementById('search-clear-btn').style.display = val ? 'block' : 'none';
@@ -313,35 +477,28 @@ function onSearchInput(val){
   document.getElementById('search-empty').style.display='none';
   searchTimer = setTimeout(()=>doSearch(searchQuery), 280);
 }
-
 function clearSearch(){
   document.getElementById('main-search').value='';
   onSearchInput('');
 }
 
-let searchGradeFilter=null, searchSubjectFilter=null;
+const RESULTS_PAGE = 50;
+let searchPageOffset=0, searchFilteredCache=[];
+
 async function doSearch(q){
   if(!pagesData){
     document.getElementById('search-results').innerHTML='<div class="loading"><span class="spinner"></span>Loading pages…</div>';
     await ensurePages();
   }
   if(!pagesData){ document.getElementById('search-results').innerHTML='<div class="loading">Failed to load data.</div>'; return; }
-
   const lq = q.toLowerCase();
   const words = lq.split(/\s+/).filter(Boolean);
-  const matches = pagesData.filter(p=>{
-    const t = p.text.toLowerCase();
-    return words.every(w=>t.includes(w));
-  });
-
-  // Build filter options
+  const matches = pagesData.filter(p=>{ const t=p.text.toLowerCase(); return words.every(w=>t.includes(w)); });
   const grades   = [...new Set(matches.map(p=>p.grade_label))].sort((a,b)=>gradeOrder(a)-gradeOrder(b));
   const subjects = [...new Set(matches.map(p=>p.subject))].sort();
-
   let filtered = matches;
   if(searchGradeFilter)   filtered = filtered.filter(p=>p.grade_label===searchGradeFilter);
   if(searchSubjectFilter) filtered = filtered.filter(p=>p.subject===searchSubjectFilter);
-
   renderSearchFilters(grades, subjects);
   document.getElementById('search-results-header').textContent = `${filtered.length} result${filtered.length!==1?'s':''} for "${q}"${searchGradeFilter?' · '+searchGradeFilter:''}${searchSubjectFilter?' · '+searchSubjectFilter:''}`;
   searchPageOffset = 0;
@@ -349,32 +506,59 @@ async function doSearch(q){
   renderSearchResults(filtered.slice(0, RESULTS_PAGE), q);
 }
 
-const RESULTS_PAGE = 50;
-let searchPageOffset = 0;
-let searchFilteredCache = [];
-
 function loadMoreResults(){
   searchPageOffset += RESULTS_PAGE;
   const q = searchQuery;
-  const next = searchFilteredCache.slice(searchPageOffset, searchPageOffset + RESULTS_PAGE);
+  const next = searchFilteredCache.slice(searchPageOffset, searchPageOffset+RESULTS_PAGE);
   const wrap = document.getElementById('search-results');
   const btn  = document.getElementById('load-more-btn');
   if(btn) btn.remove();
-  wrap.insertAdjacentHTML('beforeend', next.map(p=>{
-    const snippet = getSnippet(p.text, q);
-    return `<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
-      <div class="page-card-meta">
-        <span class="badge badge-grade">${esc(p.grade_label)}</span>
-        <span class="badge badge-subject">${esc(p.subject)}</span>
-        ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
-        <span class="badge badge-page">p.${p.pdf_page}</span>
-      </div>
-      <div class="page-card-text">${mark(snippet, q)}</div>
-    </div>`;
-  }).join(''));
-  if(searchPageOffset + RESULTS_PAGE < searchFilteredCache.length){
-    wrap.insertAdjacentHTML('beforeend', `<div style="text-align:center;padding:16px"><button id="load-more-btn" onclick="loadMoreResults()" style="padding:8px 24px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:.88rem;color:var(--blue)">Load more (${searchFilteredCache.length - searchPageOffset - RESULTS_PAGE} remaining)</button></div>`);
+  wrap.insertAdjacentHTML('beforeend', next.map(p=>pageCardHtml(p,q)).join(''));
+  if(searchPageOffset+RESULTS_PAGE < searchFilteredCache.length){
+    wrap.insertAdjacentHTML('beforeend', loadMoreBtn(searchFilteredCache.length - searchPageOffset - RESULTS_PAGE));
   }
+}
+
+function pageCardHtml(p, q){
+  const snippet = getSnippet(p.text, q);
+  return `<div class="page-card" onclick="handleCardClick(event,'${p.book_id}',${p.id},${p.pdf_page})">
+    <div class="page-card-meta">
+      <span class="badge badge-grade">${esc(p.grade_label)}</span>
+      <span class="badge badge-subject">${esc(p.subject)}</span>
+      ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+      <span class="badge badge-page">p.${p.pdf_page}</span>
+      <button class="scan-btn" onclick="event.stopPropagation();toggleCardScan(this,'${p.book_id}',${p.pdf_page})">📷 Scan</button>
+    </div>
+    <div class="page-card-text">${mark(snippet, q)}</div>
+    <div class="page-card-scan"></div>
+  </div>`;
+}
+
+function handleCardClick(e, bookId, pageId, pdfPage){
+  if(e.target.classList.contains('scan-btn')) return;
+  openBookAtPage(bookId, pageId);
+}
+
+function toggleCardScan(btn, bookId, pdfPage){
+  const card  = btn.closest('.page-card');
+  const panel = card.querySelector('.page-card-scan');
+  if(panel.style.display==='block'){
+    panel.style.display='none'; btn.textContent='📷 Scan'; return;
+  }
+  btn.textContent='✕ Close';
+  panel.style.display='block';
+  if(!panel.querySelector('img')){
+    const img = document.createElement('img');
+    img.src = scanUrl(bookId, pdfPage);
+    img.loading = 'lazy';
+    img.onclick = ()=>openScanFullscreenUrl(img.src);
+    img.onerror = ()=>{ panel.innerHTML='<div style="color:var(--muted);font-size:.8rem;padding:8px">Scan not yet available</div>'; };
+    panel.appendChild(img);
+  }
+}
+
+function loadMoreBtn(remaining){
+  return `<div style="text-align:center;padding:16px"><button id="load-more-btn" onclick="loadMoreResults()" style="padding:8px 24px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:.88rem;color:var(--blue)">Load more (${remaining} remaining)</button></div>`;
 }
 
 function renderSearchFilters(grades, subjects){
@@ -386,41 +570,24 @@ function renderSearchFilters(grades, subjects){
   });
   html += '<span style="font-size:.8rem;color:var(--muted);align-self:center;margin-left:8px">Subject:</span>';
   subjects.forEach(s=>{
-    html += `<button class="filter-chip${searchSubjectFilter===s?' active':''}" onclick="setSearchSubjectFilter('${s}')">${esc(s)}</button>`;
+    html += `<button class="filter-chip${searchSubjectFilter===s?' active':''}" onclick="setSearchSubjectFilter('${esc(s)}')">${esc(s)}</button>`;
   });
   row.innerHTML = html;
 }
-
-function setSearchGradeFilter(g){
-  searchGradeFilter = searchGradeFilter===g ? null : g;
-  doSearch(searchQuery);
-}
-function setSearchSubjectFilter(s){
-  searchSubjectFilter = searchSubjectFilter===s ? null : s;
-  doSearch(searchQuery);
-}
+function setSearchGradeFilter(g){ searchGradeFilter = searchGradeFilter===g?null:g; doSearch(searchQuery); }
+function setSearchSubjectFilter(s){ searchSubjectFilter = searchSubjectFilter===s?null:s; doSearch(searchQuery); }
 
 function renderSearchResults(pages, q){
   const wrap = document.getElementById('search-results');
   if(!pages.length){ wrap.innerHTML='<div class="empty"><div class="empty-icon">😕</div>No results found.</div>'; return; }
-  wrap.innerHTML = pages.map(p=>{
-    const snippet = getSnippet(p.text, q);
-    return `<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
-      <div class="page-card-meta">
-        <span class="badge badge-grade">${esc(p.grade_label)}</span>
-        <span class="badge badge-subject">${esc(p.subject)}</span>
-        ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
-        <span class="badge badge-page">p.${p.pdf_page}</span>
-      </div>
-      <div class="page-card-text">${mark(snippet, q)}</div>
-    </div>`;
-  }).join('');
+  wrap.innerHTML = pages.map(p=>pageCardHtml(p,q)).join('');
   if(searchFilteredCache.length > RESULTS_PAGE){
-    wrap.insertAdjacentHTML('beforeend', `<div style="text-align:center;padding:16px"><button id="load-more-btn" onclick="loadMoreResults()" style="padding:8px 24px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:.88rem;color:var(--blue)">Load more (${searchFilteredCache.length - RESULTS_PAGE} remaining)</button></div>`);
+    wrap.insertAdjacentHTML('beforeend', loadMoreBtn(searchFilteredCache.length-RESULTS_PAGE));
   }
 }
 
 function getSnippet(text, q){
+  if(!q) return text.slice(0,300);
   const lq = q.toLowerCase();
   const idx = text.toLowerCase().indexOf(lq.split(/\s+/)[0]);
   if(idx===-1) return text.slice(0,300);
@@ -428,12 +595,11 @@ function getSnippet(text, q){
   return (start>0?'…':'')+text.slice(start,start+400);
 }
 
-// ── Grades tab ─────────────────────────────────────────────────────────────
+// ── Grades ────────────────────────────────────────────────────────────────
 function gradeOrder(label){
   if(label==='Pre-1') return -1;
   return parseInt(label.replace('Grade ',''))||0;
 }
-
 async function initGrades(){
   if(!booksData) await ensureBooks();
   if(!booksData) return;
@@ -443,15 +609,13 @@ async function initGrades(){
   if(!currentGrade && grades.length) selectGrade(grades[0]);
   closeBook();
 }
-
 function selectGrade(g){
   currentGrade = g;
   document.querySelectorAll('.grade-pill').forEach(b=>b.classList.toggle('active',b.textContent===g));
   const books = booksData.filter(b=>b.grade_label===g);
-  const grid = document.getElementById('grade-subject-grid');
-  const icons = subjectIcon;
+  const grid  = document.getElementById('grade-subject-grid');
   grid.innerHTML = books.map(b=>`<div class="subject-card" onclick="openBook('${b.id}')">
-    <div class="subject-icon">${icons[b.subject]||'📖'}</div>
+    <div class="subject-icon">${subjectIcon[b.subject]||'📖'}</div>
     <div class="subject-name">${esc(b.subject)}</div>
     <div class="subject-meta">${b.page_count} pages</div>
   </div>`).join('');
@@ -463,103 +627,97 @@ const subjectIcon = {
   'English':'📝','Math':'🔢','Mathematics':'🔢','Science':'🔬',
   'General Science':'🔬','Biology':'🧬','Chemistry':'⚗️','Physics':'⚛️',
   'Computer Science':'💻','Geography':'🌍','History':'🏛️',
-  'Pakistan Studies':'🇵🇰','Statistics':'📊','Home Economics':'🏠',
-  'Unknown':'📖',
+  'Pakistan Studies':'🇵🇰','Statistics':'📊','Home Economics':'🏠','Unknown':'📖',
 };
 
-// ── Book reader ────────────────────────────────────────────────────────────
+// ── Book reader ───────────────────────────────────────────────────────────
 async function openBook(bookId, startPageId=null){
   if(!pagesData) await ensurePages();
   if(!pagesData) return;
   currentBookId = bookId;
-  const book = bookMap[bookId];
+  const book  = bookMap[bookId];
   const pages = pagesData.filter(p=>p.book_id===bookId);
   currentBookPages = pages;
-
   document.getElementById('book-view-title').textContent = book?.title||bookId;
   document.getElementById('grade-subject-grid').style.display='none';
   document.getElementById('book-view').style.display='block';
-
-  // Build chapter nav
+  // Chapter nav
   const chapters = [];
   pages.forEach((p,i)=>{
     if(p.chapter && (!chapters.length || chapters[chapters.length-1].ch !== p.chapter)){
       chapters.push({ch:p.chapter, idx:i});
     }
   });
-  const chList = document.getElementById('chapter-list');
-  chList.innerHTML = chapters.map((c,ci)=>`<div class="ch-item" id="ch-${ci}" data-idx="${c.idx}" onclick="gotoChapter(${c.idx})">${esc(c.ch)}</div>`).join('') || '<div style="color:var(--muted);font-size:.8rem">No chapters detected</div>';
-
+  document.getElementById('chapter-list').innerHTML = chapters.map((c,ci)=>`<div class="ch-item" id="ch-${ci}" data-idx="${c.idx}" onclick="gotoChapter(${c.idx})">${esc(c.ch)}</div>`).join('') || '<div style="color:var(--muted);font-size:.8rem">No chapters detected</div>';
   const startIdx = startPageId ? pages.findIndex(p=>p.id===startPageId) : 0;
+  setPageView('text');
   gotoPageIdx(Math.max(0,startIdx));
 }
 
+function setPageView(mode){
+  pageViewMode = mode;
+  document.getElementById('pv-text-btn').classList.toggle('active', mode==='text');
+  document.getElementById('pv-scan-btn').classList.toggle('active', mode==='scan');
+  document.getElementById('page-viewer').style.display     = mode==='text' ? 'block' : 'none';
+  document.getElementById('page-scan-viewer').style.display = mode==='scan' ? 'block' : 'none';
+  if(mode==='scan') loadCurrentScan();
+}
+
+function loadCurrentScan(){
+  const p = currentBookPages[currentPageIdx];
+  if(!p) return;
+  const img = document.getElementById('page-scan-img');
+  const url = scanUrl(p.book_id, p.pdf_page);
+  if(img.src !== url) img.src = url;
+}
+
 function renderOcrText(text){
-  // Convert OCR markdown-like markup to HTML
   const lines = esc(text).split('\n');
-  let html = '';
-  let inTable = false;
+  let html = '', inTable = false;
   for(const raw of lines){
     const line = raw.trim();
-    if(!line){ if(inTable){ html+='</table>'; inTable=false; } html+='<br>'; continue; }
-    if(line.startsWith('###')){
-      if(inTable){ html+='</table>'; inTable=false; }
-      html+=`<h3>${line.replace(/^###\s*/,'')}</h3>`;
-    } else if(line.startsWith('##')){
-      if(inTable){ html+='</table>'; inTable=false; }
-      html+=`<h4>${line.replace(/^##\s*/,'')}</h4>`;
-    } else if(/^\[Page \d+\]$/.test(line)){
-      if(inTable){ html+='</table>'; inTable=false; }
-      html+=`<div class="page-num">${line}</div>`;
-    } else if(line.startsWith('[DIAGRAM')||line.startsWith('[IMAGE')||line.startsWith('[FIGURE')){
-      if(inTable){ html+='</table>'; inTable=false; }
-      html+=`<div class="diagram-note">${line}</div>`;
-    } else if(line.includes('|')){
+    if(!line){ if(inTable){html+='</table>';inTable=false;} html+='<br>'; continue; }
+    if(line.startsWith('###')){ if(inTable){html+='</table>';inTable=false;} html+=`<h3>${line.replace(/^###\s*/,'')}</h3>`; }
+    else if(line.startsWith('##')){ if(inTable){html+='</table>';inTable=false;} html+=`<h4>${line.replace(/^##\s*/,'')}</h4>`; }
+    else if(/^\[Page \d+\]$/.test(line)){ if(inTable){html+='</table>';inTable=false;} html+=`<div class="page-num">${line}</div>`; }
+    else if(line.startsWith('[DIAGRAM')||line.startsWith('[IMAGE')||line.startsWith('[FIGURE')){ if(inTable){html+='</table>';inTable=false;} html+=`<div class="diagram-note">${line}</div>`; }
+    else if(line.includes('|')){
       const cells = line.split('|').map(c=>c.trim()).filter((c,i,a)=>i>0||c);
-      if(!inTable){ html+='<table>'; inTable=true; }
-      const isHeader = cells.some(c=>c==='' || /^[-:]+$/.test(c));
+      if(!inTable){html+='<table>';inTable=true;}
+      const isHeader = cells.some(c=>/^[-:]+$/.test(c));
       if(isHeader) continue;
-      const tag = cells.every(c=>c.length>0) && !html.endsWith('<tr>') ? 'td' : 'td';
-      html+=`<tr>${cells.map(c=>`<${tag}>${c}</${tag}>`).join('')}</tr>`;
+      html+=`<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
     } else {
-      if(inTable){ html+='</table>'; inTable=false; }
-      if(raw.startsWith('  ') || raw.startsWith('\t')){
-        html+=`<div style="padding-left:20px">${line}</div>`;
-      } else {
-        html+=`<p style="margin:3px 0">${line}</p>`;
-      }
+      if(inTable){html+='</table>';inTable=false;}
+      html += raw.startsWith('  ')||raw.startsWith('\t')
+        ? `<div style="padding-left:20px">${line}</div>`
+        : `<p style="margin:3px 0">${line}</p>`;
     }
   }
   if(inTable) html+='</table>';
   return html;
 }
 
-let bookSearchQuery='';
-let bookSearchMatches=[];
-let bookSearchIdx=0;
-
+let bookSearchQuery='', bookSearchMatches=[], bookSearchIdx=0;
 function bookSearchHighlight(q){
   bookSearchQuery = q.trim();
-  const showCtrl = q.length>0;
-  document.getElementById('book-search-next').style.display = showCtrl ? 'inline-block' : 'none';
-  document.getElementById('book-search-clear').style.display = showCtrl ? 'inline-block' : 'none';
+  const show = q.length > 0;
+  document.getElementById('book-search-next').style.display  = show ? 'inline-block' : 'none';
+  document.getElementById('book-search-clear').style.display = show ? 'inline-block' : 'none';
   renderCurrentPage();
   if(bookSearchQuery){
     setTimeout(()=>{
-      const marks = document.querySelectorAll('#page-content mark');
-      bookSearchMatches = [...marks];
-      bookSearchIdx = 0;
+      const marks = [...document.querySelectorAll('#page-content mark')];
+      bookSearchMatches = marks; bookSearchIdx = 0;
       if(marks.length) marks[0].scrollIntoView({block:'center'});
     }, 50);
   }
 }
-
 function bookSearchNext(){
   if(!bookSearchMatches.length) return;
   bookSearchIdx = (bookSearchIdx+1) % bookSearchMatches.length;
   bookSearchMatches[bookSearchIdx].scrollIntoView({block:'center'});
 }
-
 function bookSearchClear(){
   document.getElementById('book-search-input').value='';
   bookSearchHighlight('');
@@ -581,46 +739,48 @@ function gotoPageIdx(idx){
   const p = currentBookPages[currentPageIdx];
   if(!p) return;
   renderCurrentPage();
+  if(pageViewMode==='scan') loadCurrentScan();
   document.getElementById('page-counter').textContent = `Page ${currentPageIdx+1} of ${currentBookPages.length} · PDF p.${p.pdf_page}${p.chapter?' · '+p.chapter:''}`;
   document.getElementById('btn-prev').disabled = currentPageIdx===0;
   document.getElementById('btn-next').disabled = currentPageIdx===currentBookPages.length-1;
-  // Scroll page viewer to top
   document.getElementById('page-viewer').scrollTop = 0;
-  // Update active chapter in nav
-  document.querySelectorAll('.ch-item').forEach(el=>el.classList.remove('active'));
-  const chItems = document.querySelectorAll('.ch-item');
-  const chData = [...chItems].map((el,i)=>({el,idx:parseInt(el.getAttribute('data-idx')||0)}));
+  document.getElementById('page-scan-viewer').scrollTop = 0;
+  // Update active chapter
+  const chItems = [...document.querySelectorAll('.ch-item')];
+  const chData  = chItems.map(el=>({el,idx:parseInt(el.getAttribute('data-idx')||0)}));
   let activeEl = null;
   for(const c of chData){ if(c.idx<=currentPageIdx) activeEl=c.el; }
+  chItems.forEach(el=>el.classList.remove('active'));
   if(activeEl){ activeEl.classList.add('active'); activeEl.scrollIntoView({block:'nearest'}); }
 }
-
-function gotoChapter(pageIdx){ gotoPageIdx(pageIdx); }
+function gotoChapter(i){ gotoPageIdx(i); }
 function prevPage(){ gotoPageIdx(currentPageIdx-1); }
 function nextPage(){ gotoPageIdx(currentPageIdx+1); }
-
-function closeBook(){
-  document.getElementById('book-view').style.display='none';
-  if(currentGrade) document.getElementById('grade-subject-grid').style.display='grid';
-}
-
+function closeBook(){ document.getElementById('book-view').style.display='none'; if(currentGrade) document.getElementById('grade-subject-grid').style.display='grid'; }
 function openBookAtPage(bookId, pageId){
   switchTab('grades');
   setTimeout(()=>openBook(bookId, pageId), 50);
 }
 
-// ── Subjects tab ───────────────────────────────────────────────────────────
+// ── Fullscreen scan ───────────────────────────────────────────────────────
+function openScanFullscreen(){
+  const img = document.getElementById('page-scan-img');
+  openScanFullscreenUrl(img.src);
+}
+function openScanFullscreenUrl(src){
+  document.getElementById('scan-full-img').src = src;
+  document.getElementById('scan-fullscreen').classList.add('open');
+}
+function closeScanFullscreen(){ document.getElementById('scan-fullscreen').classList.remove('open'); }
+
+// ── Subjects ──────────────────────────────────────────────────────────────
 async function initSubjects(){
   if(!booksData) await ensureBooks();
   if(!booksData) return;
   const grades   = [...new Set(booksData.map(b=>b.grade_label))].sort((a,b)=>gradeOrder(a)-gradeOrder(b));
   const subjects = [...new Set(booksData.map(b=>b.subject))].sort();
-  // Build lookup: subject → grade → book
-  const lookup = {};
-  booksData.forEach(b=>{
-    if(!lookup[b.subject]) lookup[b.subject]={};
-    lookup[b.subject][b.grade_label]=b;
-  });
+  const lookup   = {};
+  booksData.forEach(b=>{ if(!lookup[b.subject])lookup[b.subject]={}; lookup[b.subject][b.grade_label]=b; });
   let html = `<table class="sm-table"><thead><tr><th>Subject</th>`;
   grades.forEach(g=>{ html+=`<th>${esc(g)}</th>`; });
   html += '</tr></thead><tbody>';
@@ -637,12 +797,10 @@ async function initSubjects(){
   html += '</tbody></table>';
   document.getElementById('subjects-matrix').innerHTML = html;
 }
-
 function filterTopicsBySubject(subject){
   if(!booksData) return;
-  const books = booksData.filter(b=>b.subject===subject)
-    .sort((a,b)=>(a.grade||0)-(b.grade||0));
-  document.getElementById('subject-detail-title').textContent = subjectIcon[subject]||'📖' + ' ' + subject + ` (${books.length} book${books.length!==1?'s':''})`;
+  const books = booksData.filter(b=>b.subject===subject).sort((a,b)=>(a.grade||0)-(b.grade||0));
+  document.getElementById('subject-detail-title').textContent = (subjectIcon[subject]||'📖')+' '+subject+` (${books.length} book${books.length!==1?'s':''})`;
   document.getElementById('subject-detail-grid').innerHTML = books.map(b=>`<div class="subject-card" onclick="openBookAtPage('${b.id}',null)">
     <div class="subject-icon">${subjectIcon[b.subject]||'📖'}</div>
     <div class="subject-name">${esc(b.grade_label)}</div>
@@ -651,27 +809,31 @@ function filterTopicsBySubject(subject){
   document.getElementById('subjects-overview').style.display='none';
   document.getElementById('subject-detail').style.display='block';
 }
-
 function backToSubjectMatrix(){
   document.getElementById('subject-detail').style.display='none';
   document.getElementById('subjects-overview').style.display='block';
 }
 
-// ── Topics tab ─────────────────────────────────────────────────────────────
+// ── Topics ────────────────────────────────────────────────────────────────
 async function initTopics(){
   backToTopics();
   if(!clustersData){
-    const r = document.getElementById('topic-grid');
-    r.innerHTML = '<div class="loading"><span class="spinner"></span>Loading topics…</div>';
+    document.getElementById('topic-grid').innerHTML='<div class="loading"><span class="spinner"></span>Loading topics…</div>';
     clustersData = await loadJSON('tb_clusters');
   }
   if(!clustersData){ document.getElementById('topic-grid').innerHTML='<div class="empty">Topics not available.</div>'; return; }
-  renderTopicGrid();
+  renderTopicGrid('');
 }
 
-function renderTopicGrid(){
+function filterTopicCards(q){
+  renderTopicGrid(q.toLowerCase().trim());
+}
+
+function renderTopicGrid(q){
+  if(!clustersData) return;
   const maxPages = Math.max(...clustersData.map(c=>c.page_count));
-  document.getElementById('topic-grid').innerHTML = clustersData.map(c=>{
+  const filtered = q ? clustersData.filter(c=>c.label.toLowerCase().includes(q)||(c.top_words||[]).some(w=>w.includes(q))) : clustersData;
+  document.getElementById('topic-grid').innerHTML = filtered.map(c=>{
     const subjBadges = Object.entries(c.subjects||{}).slice(0,3).map(([s,n])=>`<span class="badge badge-subject">${esc(s)} ${n}</span>`).join('');
     return `<div class="topic-card" onclick="openTopic(${c.id})">
       <div class="topic-bar"><div class="topic-bar-fill" style="width:${(c.page_count/maxPages*100).toFixed(0)}%"></div></div>
@@ -680,9 +842,7 @@ function renderTopicGrid(){
       <div class="topic-subjects">${subjBadges}</div>
       <div style="font-size:.75rem;color:var(--muted);margin-top:6px">${c.page_count} pages</div>
     </div>`;
-  }).join('');
-  document.getElementById('topic-detail').style.display='none';
-  document.getElementById('topic-grid').style.display='grid';
+  }).join('') || '<div class="empty">No matching topics.</div>';
 }
 
 async function openTopic(id){
@@ -690,74 +850,243 @@ async function openTopic(id){
   const cluster = clustersData.find(c=>c.id===id);
   if(!cluster) return;
   const pageIds = new Set(cluster.page_ids);
-  const pages = pagesData.filter(p=>pageIds.has(p.id)).slice(0,50);
-  document.getElementById('topic-detail-title').textContent = cluster.label + ` — ${cluster.page_count} pages`;
+  topicPageCache = pagesData.filter(p=>pageIds.has(p.id));
+  document.getElementById('topic-detail-title').textContent = cluster.label+` — ${cluster.page_count} pages`;
+  document.getElementById('topics-overview').style.display='none';
+  document.getElementById('topic-detail').style.display='block';
+  document.getElementById('topic-subset-search').value='';
+  renderTopicPages(topicPageCache.slice(0,60), '');
+}
+function filterTopicPages(q){
+  if(!topicPageCache.length) return;
+  const lq = q.toLowerCase().trim();
+  const filtered = lq ? topicPageCache.filter(p=>p.text.toLowerCase().includes(lq)||p.subject.toLowerCase().includes(lq)||(p.chapter||'').toLowerCase().includes(lq)) : topicPageCache;
+  renderTopicPages(filtered.slice(0,60), lq);
+}
+function renderTopicPages(pages, q){
   document.getElementById('topic-detail-pages').innerHTML = pages.map(p=>`<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
     <div class="page-card-meta">
       <span class="badge badge-grade">${esc(p.grade_label)}</span>
       <span class="badge badge-subject">${esc(p.subject)}</span>
       ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+      <button class="scan-btn" onclick="event.stopPropagation();toggleCardScan(this,'${p.book_id}',${p.pdf_page})">📷 Scan</button>
     </div>
-    <div class="page-card-text">${esc(p.text.slice(0,300))}</div>
-  </div>`).join('');
-  document.getElementById('topic-grid').style.display='none';
-  document.getElementById('topic-detail').style.display='block';
+    <div class="page-card-text">${mark(p.text.slice(0,300), q)}</div>
+    <div class="page-card-scan"></div>
+  </div>`).join('') || '<div class="empty">No pages match.</div>';
 }
-
 function backToTopics(){
+  topicPageCache=[];
   document.getElementById('topic-detail').style.display='none';
-  document.getElementById('topic-grid').style.display='grid';
+  document.getElementById('topics-overview').style.display='block';
 }
 
-// ── Progression tab ────────────────────────────────────────────────────────
+// ── Tags ──────────────────────────────────────────────────────────────────
+let tagIndex = {}; // { 'subject:Biology': [...pages], 'grade:Grade 9': [...pages], ... }
+let tagFilterStr = '';
+
+async function initTags(){
+  if(!pagesData) await ensurePages();
+  if(!pagesData) return;
+  if(!Object.keys(tagIndex).length) buildTagIndex();
+  renderTagBrowser();
+}
+
+function buildTagIndex(){
+  tagIndex = {};
+  const chapterCounts = {};
+  pagesData.forEach(p=>{
+    const sk = 'subject:'+p.subject;
+    const gk = 'grade:'+p.grade_label;
+    if(!tagIndex[sk]) tagIndex[sk]=[];
+    if(!tagIndex[gk]) tagIndex[gk]=[];
+    tagIndex[sk].push(p);
+    tagIndex[gk].push(p);
+    if(p.chapter){
+      const ck = 'chapter:'+p.chapter;
+      if(!tagIndex[ck]) tagIndex[ck]=[];
+      tagIndex[ck].push(p);
+      chapterCounts[ck] = (chapterCounts[ck]||0)+1;
+    }
+  });
+  // Prune tiny chapters
+  Object.keys(tagIndex).forEach(k=>{ if(k.startsWith('chapter:') && tagIndex[k].length < 3) delete tagIndex[k]; });
+}
+
+function renderTagBrowser(){
+  const q = tagFilterStr.toLowerCase();
+  const types = activeTagType === 'all' ? ['subject','grade','chapter'] : [activeTagType];
+  const cols = types.map(type=>{
+    const entries = Object.entries(tagIndex)
+      .filter(([k])=>k.startsWith(type+':'))
+      .filter(([k])=>!q||k.toLowerCase().includes(q))
+      .sort((a,b)=>b[1].length-a[1].length);
+    if(!entries.length) return '';
+    const label = type.charAt(0).toUpperCase()+type.slice(1)+'s';
+    return `<div class="tag-col">
+      <h4>${label}</h4>
+      <div class="tag-list">
+        ${entries.map(([k,v])=>{
+          const display = k.split(':').slice(1).join(':');
+          return `<div class="tag-row" onclick="openTag('${esc(k)}')">
+            <span>${esc(display)}</span>
+            <span class="tag-count">${v.length}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('tag-cols').innerHTML = cols || '<div class="empty">No tags found.</div>';
+}
+
+function filterTags(q){ tagFilterStr=q; renderTagBrowser(); }
+function setTagType(type, el){
+  activeTagType = type;
+  document.querySelectorAll('.ttype-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderTagBrowser();
+}
+
+function openTag(key){
+  tagPageCache = tagIndex[key] || [];
+  const display = key.split(':').slice(1).join(':');
+  document.getElementById('tags-result-title').textContent = display+` (${tagPageCache.length} pages)`;
+  document.getElementById('tags-browser').style.display='none';
+  document.getElementById('tags-results').style.display='block';
+  document.getElementById('tags-subset-search').value='';
+  renderTagResults(tagPageCache.slice(0,60), '');
+}
+function filterTagResults(q){
+  const lq = q.toLowerCase().trim();
+  const filtered = lq ? tagPageCache.filter(p=>p.text.toLowerCase().includes(lq)||(p.chapter||'').toLowerCase().includes(lq)) : tagPageCache;
+  renderTagResults(filtered.slice(0,60), lq);
+}
+function renderTagResults(pages, q){
+  document.getElementById('tags-result-list').innerHTML = pages.map(p=>`<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
+    <div class="page-card-meta">
+      <span class="badge badge-grade">${esc(p.grade_label)}</span>
+      <span class="badge badge-subject">${esc(p.subject)}</span>
+      ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+      <button class="scan-btn" onclick="event.stopPropagation();toggleCardScan(this,'${p.book_id}',${p.pdf_page})">📷 Scan</button>
+    </div>
+    <div class="page-card-text">${mark(p.text.slice(0,300), q)}</div>
+    <div class="page-card-scan"></div>
+  </div>`).join('') || '<div class="empty">No pages match.</div>';
+}
+function backToTagBrowser(){
+  tagPageCache=[];
+  document.getElementById('tags-results').style.display='none';
+  document.getElementById('tags-browser').style.display='block';
+}
+
+// ── Progression ───────────────────────────────────────────────────────────
+async function initProgression(){
+  if(!driftData){
+    driftData = await loadJSON('tb_drift');
+  }
+  if(driftData){
+    driftWords = driftData.words || [];
+    renderDriftSidebar('');
+  }
+}
+
+function filterDriftWords(q){
+  renderDriftSidebar(q.toLowerCase().trim());
+}
+
+function renderDriftSidebar(q){
+  const filtered = q ? driftWords.filter(d=>d.word.includes(q)) : driftWords;
+  const html = filtered.slice(0,150).map(d=>`<div class="drift-word${activeDriftWord===d.word?' active':''}" onclick="setProgWordAndSearch('${esc(d.word)}')">
+    <span>${esc(d.word)}</span>
+    <span class="drift-score">${d.score.toFixed(1)}</span>
+  </div>`).join('');
+  document.getElementById('drift-word-list').innerHTML = html || '<div style="color:var(--muted);font-size:.8rem;padding:8px">No matches</div>';
+}
+
+function setProgViewMode(mode){
+  progViewMode = mode;
+  document.getElementById('prog-freq-btn').classList.toggle('active', mode==='freq');
+  document.getElementById('prog-line-btn').classList.toggle('active', mode==='line');
+}
+function setProgView(mode){
+  setProgViewMode(mode);
+  const q = document.getElementById('prog-input').value.trim().toLowerCase();
+  if(q && semData) renderProgResult(q);
+}
+
+function setProgWordAndSearch(w){
+  activeDriftWord = w;
+  document.getElementById('prog-input').value = w;
+  renderDriftSidebar(document.getElementById('drift-filter').value.toLowerCase().trim());
+  searchProg();
+}
+
 async function searchProg(){
   const q = document.getElementById('prog-input').value.trim().toLowerCase();
   if(!q) return;
+  activeDriftWord = q;
+  renderDriftSidebar(document.getElementById('drift-filter').value.toLowerCase().trim());
   if(!semData){
     document.getElementById('prog-result').innerHTML='<div class="loading"><span class="spinner"></span>Loading…</div>';
     semData = await loadJSON('tb_semantic');
   }
   document.getElementById('prog-empty').style.display='none';
   if(!semData){ document.getElementById('prog-result').innerHTML='<div class="empty">Data not available.</div>'; return; }
+  renderProgResult(q);
+}
 
+function renderProgResult(q){
   const entry = semData.words[q];
-  if(!entry){ document.getElementById('prog-result').innerHTML=`<div class="empty"><div class="empty-icon">🔎</div>No data for "<strong>${esc(q)}</strong>" — try a more common word.</div>`; return; }
-
+  if(!entry){
+    document.getElementById('prog-result').innerHTML=`<div class="empty"><div class="empty-icon">🔎</div>No data for "<strong>${esc(q)}</strong>" — try a more common word.</div>`;
+    return;
+  }
   const grades = semData.grades;
   const freq   = entry.grades || {};
   const maxF   = Math.max(1,...Object.values(freq));
 
-  // Chart bars
-  let bars = grades.map(g=>{
-    const count = freq[g]||0;
-    const h = Math.max(2, Math.round(count/maxF*100));
-    return `<div class="prog-bar-wrap">
-      <div class="prog-bar" style="height:${h}px" title="${g}: ${count} times" onclick="showProgGrade('${g}','${q}')"></div>
-      <div class="prog-bar-label">${esc(g)}</div>
-    </div>`;
-  }).join('');
+  let chartHtml = '';
+  if(progViewMode==='freq'){
+    const bars = grades.map(g=>{
+      const count = freq[g]||0;
+      const h = Math.max(2, Math.round(count/maxF*100));
+      return `<div class="prog-bar-wrap">
+        <div class="prog-bar-val">${count||''}</div>
+        <div class="prog-bar" style="height:${h}px" title="${g}: ${count} times" onclick="showProgGrade('${g}','${q}')"></div>
+        <div class="prog-bar-label">${esc(g.replace('Grade ','G'))}</div>
+      </div>`;
+    }).join('');
+    chartHtml = `<div class="prog-chart">${bars}</div>`;
+  } else {
+    // SVG line chart
+    const W=560, H=140, padL=30, padR=10, padT=10, padB=30;
+    const pts = grades.map((g,i)=>({ x:padL+(W-padL-padR)*i/(grades.length-1), y:padT+(H-padT-padB)*(1-(freq[g]||0)/maxF), g, v:freq[g]||0 }));
+    const pathD = pts.map((p,i)=>(i===0?'M':'L')+`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const dots = pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${p.v?'var(--blue-mid)':'var(--border)'}" stroke="${p.v?'var(--blue)':'#ccc'}" stroke-width="1.5" style="cursor:pointer" onclick="showProgGrade('${p.g}','${q}')" title="${p.g}: ${p.v}"><title>${p.g}: ${p.v} occurrences</title></circle>`).join('');
+    const labels = pts.map(p=>`<text x="${p.x.toFixed(1)}" y="${(H-padB+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)">${p.g.replace('Grade ','G')}</text>`).join('');
+    const vals = pts.filter(p=>p.v>0).map(p=>`<text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--blue)" font-weight="600">${p.v}</text>`).join('');
+    chartHtml = `<div class="prog-line-wrap"><svg id="prog-line-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+      <path d="${pathD}" fill="none" stroke="var(--blue-mid)" stroke-width="2" opacity=".7"/>
+      <path d="${pathD} L${pts[pts.length-1].x.toFixed(1)},${(H-padB).toFixed(1)} L${pts[0].x.toFixed(1)},${(H-padB).toFixed(1)} Z" fill="var(--blue-mid)" opacity=".08"/>
+      ${dots}${vals}${labels}
+    </svg></div>`;
+  }
 
-  // Co-words per grade (only grades with occurrences)
-  const coSections = grades.filter(g=>freq[g]>0).map(g=>{
-    const words = (entry.neighbors?.[g]||[]).slice(0,10);
-    if(!words.length) return '';
-    const chips = words.map(w=>`<span class="coword-chip" onclick="setProgWord('${esc(w)}')">${esc(w)}</span>`).join('');
-    return `<div style="margin-bottom:10px"><span style="font-size:.78rem;font-weight:600;color:var(--muted);margin-right:8px">${esc(g)}</span>${chips}</div>`;
+  // Co-words section
+  const coSections = grades.filter(g=>(freq[g]||0)>0).map(g=>{
+    const cowords = (entry.neighbors?.[g]||[]).slice(0,10);
+    if(!cowords.length) return '';
+    const chips = cowords.map(w=>`<span class="coword-chip" onclick="setProgWordAndSearch('${esc(w)}')">${esc(w)}</span>`).join('');
+    return `<div style="margin-bottom:8px"><span style="font-size:.75rem;font-weight:600;color:var(--muted);margin-right:8px">${esc(g)}</span>${chips}</div>`;
   }).join('');
 
   document.getElementById('prog-result').innerHTML = `
     <div class="prog-section">
-      <h3>Frequency across grades — "<strong>${esc(q)}</strong>" (${entry.freq} total occurrences)</h3>
-      <div class="prog-chart">${bars}</div>
+      <h3>"${esc(q)}" — ${entry.freq} total occurrences across grades</h3>
+      ${chartHtml}
     </div>
-    ${coSections?`<div class="prog-section"><h3>Related words by grade</h3>${coSections}</div>`:''}
-    <div id="prog-grade-detail"></div>
-  `;
-}
-
-function setProgWord(w){
-  document.getElementById('prog-input').value=w;
-  searchProg();
+    ${coSections?`<div class="prog-section"><h3>Related words by grade — click to explore</h3>${coSections}</div>`:''}
+    <div id="prog-grade-detail"></div>`;
 }
 
 async function showProgGrade(grade, q){
@@ -772,20 +1101,160 @@ async function showProgGrade(grade, q){
       <div class="page-card-meta">
         <span class="badge badge-subject">${esc(p.subject)}</span>
         ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+        <button class="scan-btn" onclick="event.stopPropagation();toggleCardScan(this,'${p.book_id}',${p.pdf_page})">📷 Scan</button>
       </div>
       <div class="page-card-text">${mark(getSnippet(p.text,q),q)}</div>
-    </div>`).join('')}
+      <div class="page-card-scan"></div>
+    </div>`).join('') || '<div class="empty">No pages found for this grade.</div>'}
   </div>`;
   el.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-// ── Data loading helpers ────────────────────────────────────────────────────
+// ── Bias tab ─────────────────────────────────────────────────────────────
+let biasData=null, activeBiasView='gender';
+async function initBias(){
+  if(!biasData){
+    biasData = await loadJSON('tb_bias');
+  }
+  if(!biasData){ document.getElementById('bias-content').innerHTML='<div class="empty">Bias data unavailable.</div>'; return; }
+  renderBiasView(activeBiasView);
+}
+function setBiasView(mode, el){
+  activeBiasView = mode;
+  document.querySelectorAll('#view-bias .ttype-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderBiasView(mode);
+}
+function renderBiasView(mode){
+  if(!biasData) return;
+  const el = document.getElementById('bias-content');
+  if(mode==='gender'){
+    const male   = biasData.male   || [];
+    const female = biasData.female || [];
+    // bar chart: score 0=female(left) 1=male(right), midpoint=0.5
+    const all = [...female.slice(0,60).reverse(), ...male.slice(0,60)];
+    const midY = all.findIndex(d=>d.score>=0.5);
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="font-size:.78rem;font-weight:600;color:var(--green);margin-bottom:10px">Female-coded words (score closer to 0)</div>
+          ${female.slice(0,60).map(d=>biasBar(d,'female')).join('')}
+        </div>
+        <div>
+          <div style="font-size:.78rem;font-weight:600;color:var(--blue);margin-bottom:10px">Male-coded words (score closer to 1)</div>
+          ${male.slice(0,60).map(d=>biasBar(d,'male')).join('')}
+        </div>
+      </div>`;
+  } else {
+    const entries = (biasData[mode]||[]);
+    el.innerHTML = `<div style="max-width:600px">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Score: 1.0 = mentioned exclusively in male contexts · 0.0 = exclusively female contexts</div>
+      ${entries.map(d=>biasBarFull(d)).join('')}
+    </div>`;
+  }
+}
+function biasBar(d, side){
+  const pct = side==='male' ? d.score*100 : (1-d.score)*100;
+  const color = side==='male' ? 'var(--blue-mid)' : 'var(--green)';
+  return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;cursor:pointer" onclick="searchBiasWord('${esc(d.word)}')">
+    <div style="width:120px;font-size:.8rem;text-align:right;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(d.word)}">${esc(d.word)}</div>
+    <div style="flex:1;background:#f0f0f4;border-radius:3px;height:14px;overflow:hidden">
+      <div style="width:${pct.toFixed(0)}%;height:100%;background:${color};border-radius:3px"></div>
+    </div>
+    <div style="width:36px;font-size:.72rem;color:var(--muted)">${d.score.toFixed(2)}</div>
+  </div>`;
+}
+function biasBarFull(d){
+  const pct = d.score*100;
+  const color = d.score>0.6?'var(--blue-mid)':d.score<0.4?'var(--green)':'var(--amber)';
+  const label = d.score>0.6?'male':d.score<0.4?'female':'neutral';
+  return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer" onclick="searchBiasWord('${esc(d.word)}')">
+    <div style="width:130px;font-size:.83rem;font-weight:500;white-space:nowrap">${esc(d.word)}</div>
+    <div style="flex:1;background:#f0f0f4;border-radius:3px;height:16px;overflow:hidden;position:relative">
+      <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:#ccc"></div>
+      <div style="position:absolute;left:${d.score>0.5?'50%':'${pct.toFixed(0)}%'};width:${Math.abs(pct-50).toFixed(0)}%;height:100%;background:${color};${d.score<0.5?'right:50%;left:auto':''}"></div>
+    </div>
+    <div style="width:50px;font-size:.75rem;color:var(--muted);text-align:right">${d.score.toFixed(2)} <span style="color:${color}">${label}</span></div>
+  </div>`;
+}
+async function searchBiasWord(w){
+  document.getElementById('main-search').value=w;
+  onSearchInput(w);
+  switchTab('search');
+}
+
+// ── Map tab ───────────────────────────────────────────────────────────────
+const PAK_REGIONS = [
+  {id:'punjab',    name:'Punjab',       keywords:['punjab','lahore','faisalabad','rawalpindi','multan','gujranwala'],   color:'#b8d4f0', cx:270, cy:180, r:70},
+  {id:'sindh',     name:'Sindh',        keywords:['sindh','karachi','hyderabad','sukkur','larkana'],                    color:'#b8e8c8', cx:230, cy:340, r:55},
+  {id:'baloch',    name:'Balochistan',  keywords:['balochistan','quetta','baloch','gwadar'],                           color:'#e8d4b0', cx:140, cy:310, r:80},
+  {id:'kpk',       name:'KPK',          keywords:['khyber','peshawar','pashtun','tribal','swat','nwfp'],               color:'#d4c8f0', cx:210, cy:130, r:55},
+  {id:'gilgit',    name:'Gilgit-Baltistan',keywords:['gilgit','baltistan','karakoram','hunza'],                       color:'#f0d4c8', cx:280, cy:60,  r:40},
+  {id:'kashmir',   name:'AJK',          keywords:['kashmir','muzaffarabad','mirpur','azad kashmir'],                   color:'#f0e8b0', cx:310, cy:120, r:35},
+  {id:'islamabad', name:'Islamabad',    keywords:['islamabad','capital territory'],                                     color:'#e0e0e0', cx:265, cy:155, r:18},
+  {id:'pakistan',  name:'Pakistan (general)', keywords:['pakistan','pakistani','national','quaid'],                    color:'#ddd',    cx:230, cy:420, r:0},
+];
+let mapPageCounts = {};
+let mapPagesData  = {};
+
+async function initMap(){
+  if(!pagesData) await ensurePages();
+  if(!pagesData) return;
+  if(!Object.keys(mapPageCounts).length) buildMapIndex();
+  renderMap();
+}
+function buildMapIndex(){
+  PAK_REGIONS.forEach(r=>{
+    const kws = r.keywords;
+    const pages = pagesData.filter(p=>{
+      const t = p.text.toLowerCase();
+      return kws.some(k=>t.includes(k));
+    });
+    mapPageCounts[r.id] = pages.length;
+    mapPagesData[r.id]  = pages;
+  });
+}
+function renderMap(){
+  const maxCount = Math.max(1,...Object.values(mapPageCounts));
+  const g = document.getElementById('map-regions');
+  g.innerHTML = PAK_REGIONS.filter(r=>r.r>0).map(r=>{
+    const count = mapPageCounts[r.id]||0;
+    const intensity = count/maxCount;
+    const baseColor = r.color;
+    const opacity = 0.4 + intensity*0.5;
+    return `<g onclick="showMapRegion('${r.id}')" style="cursor:pointer">
+      <circle cx="${r.cx}" cy="${r.cy}" r="${r.r}" fill="${baseColor}" stroke="#888" stroke-width="1.5" opacity="${opacity.toFixed(2)}"/>
+      <circle cx="${r.cx}" cy="${r.cy}" r="${r.r}" fill="transparent" stroke="var(--blue)" stroke-width="0" class="map-hover-ring"/>
+      <text x="${r.cx}" y="${r.cy-4}" text-anchor="middle" font-size="11" font-weight="600" fill="#333">${r.name}</text>
+      <text x="${r.cx}" y="${r.cy+12}" text-anchor="middle" font-size="10" fill="#555">${count} pages</text>
+    </g>`;
+  }).join('');
+  // Add Pakistan outline label
+  g.insertAdjacentHTML('beforeend', `<text x="250" y="490" text-anchor="middle" font-size="11" fill="var(--muted)" font-style="italic">Click a region to explore pages</text>`);
+}
+function showMapRegion(id){
+  const region = PAK_REGIONS.find(r=>r.id===id);
+  if(!region) return;
+  const pages = (mapPagesData[id]||[]).slice(0,40);
+  const detail = document.getElementById('map-detail');
+  detail.innerHTML = `
+    <div style="font-weight:700;font-size:.95rem;margin-bottom:4px">${region.name}</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">${mapPageCounts[id]||0} pages mention this region</div>
+    ${pages.map(p=>`<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})" style="margin-bottom:8px">
+      <div class="page-card-meta">
+        <span class="badge badge-grade">${esc(p.grade_label)}</span>
+        <span class="badge badge-subject">${esc(p.subject)}</span>
+      </div>
+      <div class="page-card-text">${esc(p.text.slice(0,150))}</div>
+    </div>`).join('') || '<div class="empty">No pages found.</div>'}`;
+}
+
+// ── Data loaders ──────────────────────────────────────────────────────────
 async function ensureBooks(){
   if(booksData) return;
   booksData = await loadJSON('tb_books');
   if(booksData) booksData.forEach(b=>{ bookMap[b.id]=b; });
 }
-
 async function ensurePages(){
   if(pagesData) return;
   await ensureBooks();
@@ -798,24 +1267,25 @@ async function ensurePages(){
   if(pagesData) pagesData.forEach(p=>{ pageMap[p.id]=p; });
 }
 
-// ── Keyboard navigation ────────────────────────────────────────────────────
+// ── Keyboard ──────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e=>{
   if(e.target.tagName==='INPUT') return;
+  if(e.key==='Escape'){ closeScanFullscreen(); }
   if(currentBookId && document.getElementById('book-view').style.display!=='none'){
-    if(e.key==='ArrowRight'||e.key==='ArrowDown') { e.preventDefault(); nextPage(); }
-    if(e.key==='ArrowLeft' ||e.key==='ArrowUp')   { e.preventDefault(); prevPage(); }
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'){ e.preventDefault(); nextPage(); }
+    if(e.key==='ArrowLeft' ||e.key==='ArrowUp')  { e.preventDefault(); prevPage(); }
     if(e.key==='Escape') closeBook();
   }
 });
 
-// ── Init ────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────
 (async()=>{
-  document.getElementById('search-empty').innerHTML = '<div class="loading"><span class="spinner"></span>Loading…</div>';
+  document.getElementById('search-empty').innerHTML='<div class="loading"><span class="spinner"></span>Loading…</div>';
   await ensureBooks();
   if(booksData && booksData.length > 0){
     const totalBooks = booksData.length;
-    const grades = new Set(booksData.map(b=>b.grade_label)).size;
-    const subjects = new Set(booksData.map(b=>b.subject)).size;
+    const grades     = new Set(booksData.map(b=>b.grade_label)).size;
+    const subjects   = new Set(booksData.map(b=>b.subject)).size;
     const totalPages = booksData.reduce((s,b)=>s+b.page_count,0);
     document.getElementById('search-empty').innerHTML = `
       <div class="empty-icon">📚</div>
@@ -824,19 +1294,15 @@ document.addEventListener('keydown', e=>{
         <div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${totalBooks}</div><div style="font-size:.8rem;color:var(--muted)">Books</div></div>
         <div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${grades}</div><div style="font-size:.8rem;color:var(--muted)">Grades</div></div>
         <div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${subjects}</div><div style="font-size:.8rem;color:var(--muted)">Subjects</div></div>
-        ${totalPages?`<div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${totalPages.toLocaleString()}</div><div style="font-size:.8rem;color:var(--muted)">Pages</div></div>`:''}
+        <div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${totalPages.toLocaleString()}</div><div style="font-size:.8rem;color:var(--muted)">Pages</div></div>
       </div>
       <div style="font-size:.88rem;color:var(--muted)">Search across all grades and subjects above</div>
-      <div style="margin-top:10px;font-size:.82rem;color:var(--muted)">Try: <em onclick="document.getElementById('main-search').value='democracy';onSearchInput('democracy')" style="cursor:pointer;color:var(--blue)">democracy</em> · <em onclick="document.getElementById('main-search').value='photosynthesis';onSearchInput('photosynthesis')" style="cursor:pointer;color:var(--blue)">photosynthesis</em> · <em onclick="document.getElementById('main-search').value='Pakistan';onSearchInput('Pakistan')" style="cursor:pointer;color:var(--blue)">Pakistan</em> · <em onclick="document.getElementById('main-search').value='gravity';onSearchInput('gravity')" style="cursor:pointer;color:var(--blue)">gravity</em></div>
-    `;
-  } else {
-    document.getElementById('search-empty').innerHTML = `
-      <div class="empty-icon">📚</div>
-      <div style="font-size:1rem;font-weight:600;margin-bottom:8px">PCTB Textbook Explorer</div>
-      <div style="font-size:.9rem;color:var(--muted);margin-bottom:12px">OCR processing is underway — data will appear here once complete.</div>
-      <div style="font-size:.82rem;color:var(--muted)">This viewer covers Grade Pre-1 through Grade 12 Punjab Curriculum textbooks.<br>
-      Search will work across all subjects once data is ready.</div>
-    `;
+      <div style="margin-top:10px;font-size:.82rem;color:var(--muted)">Try:
+        <em onclick="document.getElementById('main-search').value='democracy';onSearchInput('democracy')" style="cursor:pointer;color:var(--blue)">democracy</em> ·
+        <em onclick="document.getElementById('main-search').value='photosynthesis';onSearchInput('photosynthesis')" style="cursor:pointer;color:var(--blue)">photosynthesis</em> ·
+        <em onclick="document.getElementById('main-search').value='acid';onSearchInput('acid')" style="cursor:pointer;color:var(--blue)">acid</em> ·
+        <em onclick="document.getElementById('main-search').value='gravity';onSearchInput('gravity')" style="cursor:pointer;color:var(--blue)">gravity</em>
+      </div>`;
   }
 })();
 </script>
