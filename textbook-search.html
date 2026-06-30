@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PCTB Textbook Explorer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a4f8a;--blue-light:#e8f0fb;--blue-mid:#3a72c0;
+  --green:#1a6b3a;--green-light:#e6f4ec;
+  --amber:#b85c00;--amber-light:#fff3e0;
+  --red:#8b1a00;
+  --bg:#f7f9fc;--card:#fff;--border:#dde3ee;
+  --text:#1a1f2e;--muted:#6b7694;
+  --radius:10px;--shadow:0 2px 8px rgba(0,0,0,.08);
+}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── Nav ── */
+nav{background:var(--blue);padding:0 16px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.brand{color:#fff;font-weight:700;font-size:1.05rem;padding:12px 8px 12px 0;margin-right:6px;white-space:nowrap;letter-spacing:-.2px}
+.tab-btn{background:none;border:none;color:rgba(255,255,255,.75);padding:12px 13px;cursor:pointer;font-size:.88rem;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
+.tab-btn:hover{color:#fff;background:rgba(255,255,255,.08)}
+.tab-btn.active{color:#fff;border-bottom-color:#7eb8ff}
+.search-wrap{flex:1;min-width:180px;max-width:380px;margin:6px 0 6px 8px;position:relative}
+#main-search{width:100%;padding:7px 34px 7px 12px;border:none;border-radius:20px;font-size:.9rem;outline:none;background:rgba(255,255,255,.15);color:#fff}
+#main-search::placeholder{color:rgba(255,255,255,.55)}
+#main-search:focus{background:rgba(255,255,255,.22)}
+.search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:1rem;display:none}
+
+/* ── Layout ── */
+.view{display:none;padding:20px 16px;max-width:1200px;margin:0 auto}
+.view.active{display:block}
+
+/* ── Cards ── */
+.page-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.page-card:hover{box-shadow:var(--shadow)}
+.page-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px;align-items:center}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.badge-grade{background:var(--blue-light);color:var(--blue)}
+.badge-subject{background:var(--green-light);color:var(--green)}
+.badge-chapter{background:#f3f0ff;color:#5a1a8b;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.badge-page{background:#f0f0f0;color:var(--muted)}
+.page-card-text{font-size:.87rem;line-height:1.6;color:#2a2a3a;max-height:120px;overflow:hidden;mask-image:linear-gradient(to bottom,black 70%,transparent)}
+.page-card-text mark{background:#fff176;border-radius:2px;padding:0 1px}
+
+/* ── Search results header ── */
+.results-header{color:var(--muted);font-size:.85rem;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.filter-chip{padding:4px 12px;border-radius:16px;border:1px solid var(--border);background:var(--card);font-size:.82rem;cursor:pointer;color:var(--muted);transition:all .12s}
+.filter-chip.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.filter-chip:hover:not(.active){background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+
+/* ── Grade tab ── */
+.grade-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
+.grade-pill{padding:10px 22px;border-radius:24px;border:2px solid var(--border);background:var(--card);cursor:pointer;font-size:.95rem;font-weight:600;color:var(--muted);transition:all .15s}
+.grade-pill:hover{border-color:var(--blue-mid);color:var(--blue)}
+.grade-pill.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+.subject-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.subject-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .15s;text-align:center}
+.subject-card:hover{box-shadow:var(--shadow);border-color:var(--blue-mid)}
+.subject-card .subject-icon{font-size:2rem;margin-bottom:8px}
+.subject-card .subject-name{font-weight:600;font-size:.95rem;margin-bottom:4px}
+.subject-card .subject-meta{font-size:.78rem;color:var(--muted)}
+
+/* ── Book reader ── */
+#book-view{display:none}
+.book-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.back-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:.85rem;color:var(--muted)}
+.back-btn:hover{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+.book-title{font-weight:700;font-size:1.1rem}
+.book-layout{display:grid;grid-template-columns:220px 1fr;gap:16px}
+@media(max-width:700px){.book-layout{grid-template-columns:1fr}}
+.chapter-nav{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;max-height:75vh;overflow-y:auto;position:sticky;top:68px}
+.chapter-nav h4{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.ch-item{padding:5px 8px;border-radius:6px;cursor:pointer;font-size:.83rem;color:var(--muted);transition:background .1s}
+.ch-item:hover{background:var(--blue-light);color:var(--blue)}
+.ch-item.active{background:var(--blue-light);color:var(--blue);font-weight:600}
+#page-viewer{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;min-height:400px}
+#page-viewer .ocr-page{font-family:Georgia,serif;font-size:.95rem;line-height:1.8;color:#1a1a2e}
+#page-viewer .ocr-page h3{font-size:1.05rem;font-weight:700;margin:16px 0 6px;color:var(--blue)}
+#page-viewer .ocr-page h4{font-size:.95rem;font-weight:600;margin:12px 0 4px;color:var(--text)}
+#page-viewer .ocr-page .diagram-note{font-style:italic;color:var(--muted);background:var(--blue-light);border-left:3px solid var(--blue-mid);padding:6px 12px;border-radius:0 6px 6px 0;margin:8px 0}
+#page-viewer .ocr-page .page-num{color:var(--muted);font-size:.78rem;text-align:center;margin:4px 0}
+#page-viewer .ocr-page table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.85rem}
+#page-viewer .ocr-page td,#page-viewer .ocr-page th{border:1px solid var(--border);padding:4px 8px}
+#page-viewer .ocr-page th{background:var(--blue-light);font-weight:600}
+.book-search-wrap{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.book-search-wrap input{flex:1;padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:.85rem;outline:none}
+.book-search-wrap input:focus{border-color:var(--blue-mid)}
+.book-search-wrap button{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;font-size:.82rem;white-space:nowrap}
+.book-search-wrap button:hover{background:var(--blue-light);color:var(--blue)}
+.page-nav{display:flex;align-items:center;gap:12px;margin-top:14px;justify-content:center}
+.page-nav button{padding:7px 18px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:.88rem}
+.page-nav button:hover:not(:disabled){background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+.page-nav button:disabled{opacity:.4;cursor:default}
+.page-counter{font-size:.85rem;color:var(--muted)}
+
+/* ── Topics ── */
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.topic-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:box-shadow .15s}
+.topic-card:hover{box-shadow:var(--shadow)}
+.topic-card h3{font-size:.9rem;font-weight:600;margin-bottom:6px}
+.topic-card .topic-words{font-size:.78rem;color:var(--muted);margin-bottom:8px}
+.topic-card .topic-subjects{display:flex;flex-wrap:wrap;gap:4px}
+.topic-bar{height:4px;background:var(--blue-light);border-radius:2px;margin-bottom:8px;overflow:hidden}
+.topic-bar-fill{height:100%;background:var(--blue-mid);border-radius:2px;transition:width .3s}
+#topic-detail{display:none;margin-top:20px}
+#topic-detail-back{background:none;border:none;color:var(--blue);cursor:pointer;font-size:.88rem;margin-bottom:12px;padding:0}
+
+/* ── Progression ── */
+.prog-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.prog-section h3{font-size:.9rem;font-weight:600;margin-bottom:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.prog-chart{display:flex;align-items:flex-end;gap:6px;height:120px;margin-bottom:10px}
+.prog-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}
+.prog-bar{width:100%;background:var(--blue-mid);border-radius:4px 4px 0 0;min-height:2px;transition:height .3s;cursor:pointer;position:relative}
+.prog-bar:hover{background:var(--blue);filter:brightness(1.1)}
+.prog-bar-label{font-size:.7rem;color:var(--muted);margin-top:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog-cowords{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.coword-chip{padding:3px 10px;border-radius:12px;background:var(--blue-light);color:var(--blue);font-size:.78rem;cursor:pointer}
+.coword-chip:hover{background:var(--blue);color:#fff}
+.prog-search-wrap{display:flex;gap:10px;margin-bottom:20px;align-items:center}
+#prog-input{flex:1;padding:9px 14px;border:1px solid var(--border);border-radius:8px;font-size:.95rem;outline:none}
+#prog-input:focus{border-color:var(--blue-mid);box-shadow:0 0 0 2px rgba(58,114,192,.15)}
+#prog-search-btn{padding:9px 20px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9rem}
+#prog-search-btn:hover{background:var(--blue-mid)}
+
+/* ── Subjects tab ── */
+.subjects-matrix{overflow-x:auto}
+table.sm-table{width:100%;border-collapse:collapse;font-size:.83rem}
+table.sm-table th{background:var(--blue);color:#fff;padding:8px 12px;text-align:left;white-space:nowrap}
+table.sm-table td{padding:7px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.sm-table tr:hover td{background:var(--blue-light)}
+.sm-dot{display:inline-block;width:18px;height:18px;border-radius:50%;cursor:pointer;text-align:center;line-height:18px;font-size:.65rem;font-weight:700}
+.sm-dot-yes{background:var(--blue);color:#fff}
+.sm-dot-yes:hover{background:var(--blue-mid);transform:scale(1.2)}
+.sm-dot-no{background:#eee;color:transparent}
+.subject-row-label{font-weight:600;cursor:pointer;color:var(--blue)}
+.subject-row-label:hover{text-decoration:underline}
+
+/* ── Misc ── */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:12px}
+.section-title{font-size:1rem;font-weight:700;margin-bottom:14px;color:var(--text)}
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">📚 PCTB Explorer</span>
+  <button class="tab-btn active" onclick="switchTab('search')"      id="tab-search">Search</button>
+  <button class="tab-btn"        onclick="switchTab('grades')"      id="tab-grades">Grades</button>
+  <button class="tab-btn"        onclick="switchTab('subjects')"    id="tab-subjects">Subjects</button>
+  <button class="tab-btn"        onclick="switchTab('topics')"      id="tab-topics">Topics</button>
+  <button class="tab-btn"        onclick="switchTab('progression')" id="tab-progression">Progression</button>
+  <div class="search-wrap">
+    <input id="main-search" type="search" placeholder="Search textbooks…" oninput="onSearchInput(this.value)">
+    <button class="search-clear" id="search-clear-btn" onclick="clearSearch()">✕</button>
+  </div>
+</nav>
+
+<!-- Search -->
+<div class="view active" id="view-search">
+  <div id="search-filter-row" class="filter-row" style="display:none"></div>
+  <div id="search-results-header" class="results-header"></div>
+  <div id="search-results"></div>
+  <div class="empty" id="search-empty">
+    <div class="empty-icon">🔍</div>
+    <div>Type in the search bar to find content across all textbooks</div>
+  </div>
+</div>
+
+<!-- Grades -->
+<div class="view" id="view-grades">
+  <div id="grade-selector" class="grade-grid"></div>
+  <div id="grade-subject-grid" class="subject-grid"></div>
+  <div id="book-view">
+    <div class="book-header">
+      <button class="back-btn" onclick="closeBook()">← Back</button>
+      <div class="book-title" id="book-view-title"></div>
+    </div>
+    <div class="book-layout">
+      <div class="chapter-nav" id="chapter-nav">
+        <h4>Chapters</h4>
+        <div id="chapter-list"></div>
+      </div>
+      <div>
+        <div class="book-search-wrap">
+          <input id="book-search-input" type="text" placeholder="Search within book…" oninput="bookSearchHighlight(this.value)" onkeydown="if(event.key==='Enter')bookSearchNext()">
+          <button onclick="bookSearchNext()" id="book-search-next" style="display:none">Next ↓</button>
+          <button onclick="bookSearchClear()" id="book-search-clear" style="display:none">✕</button>
+        </div>
+        <div id="page-viewer"><div id="page-content" class="ocr-page"></div></div>
+        <div class="page-nav">
+          <button onclick="prevPage()" id="btn-prev">← Prev</button>
+          <span class="page-counter" id="page-counter"></span>
+          <button onclick="nextPage()" id="btn-next">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Subjects -->
+<div class="view" id="view-subjects">
+  <div id="subjects-overview">
+    <div class="section-title">Subject × Grade Coverage</div>
+    <div class="subjects-matrix" id="subjects-matrix"></div>
+  </div>
+  <div id="subject-detail" style="display:none">
+    <div style="margin-bottom:12px">
+      <button onclick="backToSubjectMatrix()" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:.88rem;padding:0">← All Subjects</button>
+    </div>
+    <div class="section-title" id="subject-detail-title"></div>
+    <div class="subject-grid" id="subject-detail-grid"></div>
+  </div>
+</div>
+
+<!-- Topics -->
+<div class="view" id="view-topics">
+  <div class="filter-row" id="topics-filter-row"></div>
+  <div class="topic-grid" id="topic-grid"></div>
+  <div id="topic-detail">
+    <button id="topic-detail-back" onclick="backToTopics()">← All Topics</button>
+    <div class="section-title" id="topic-detail-title"></div>
+    <div id="topic-detail-pages"></div>
+  </div>
+</div>
+
+<!-- Progression -->
+<div class="view" id="view-progression">
+  <div class="prog-search-wrap">
+    <input id="prog-input" type="text" placeholder="Enter a word or concept (e.g. democracy, photosynthesis, gravity)…" onkeydown="if(event.key==='Enter')searchProg()">
+    <button id="prog-search-btn" onclick="searchProg()">Explore</button>
+  </div>
+  <div id="prog-result"></div>
+  <div class="empty" id="prog-empty">
+    <div class="empty-icon">📈</div>
+    <div>See how a concept evolves across Grade 1 → 12</div>
+    <div style="margin-top:8px;font-size:.85rem">Try: <em>democracy</em> · <em>photosynthesis</em> · <em>Islam</em> · <em>war</em> · <em>fraction</em></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const BASE  = 'https://raw.githubusercontent.com/osama-website/joham-viewer/master';
+const JBASE = BASE + '/textbook-viewer/json';
+const DATA_VER = '1';
+const CACHE = {};
+
+async function loadJSON(name){
+  if(CACHE[name]) return CACHE[name];
+  try{
+    const r = await fetch(`${JBASE}/${name}.json?v=${DATA_VER}`);
+    if(!r.ok) throw new Error(r.status);
+    CACHE[name] = await r.json();
+    return CACHE[name];
+  } catch(e){
+    // Fallback to local
+    try{
+      const r = await fetch(`json/${name}.json`);
+      if(!r.ok) throw new Error(r.status);
+      CACHE[name] = await r.json();
+      return CACHE[name];
+    } catch(e2){ return null; }
+  }
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function mark(text, q){
+  if(!q) return esc(text);
+  // Escape first, then highlight on the escaped text (avoids double-escaping)
+  const escaped = esc(text);
+  const words = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').split(/\s+/).filter(Boolean);
+  return escaped.replace(new RegExp(`(${words.join('|')})`, 'gi'), '<mark>$1</mark>');
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let booksData=null, pagesData=null, semData=null, clustersData=null;
+let pageMap={}, bookMap={};
+let currentGrade=null, currentBookId=null, currentBookPages=[], currentPageIdx=0;
+let topicFilter=null;
+let searchQuery='';
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('view-'+tab).classList.add('active');
+  if(tab==='grades')   initGrades();
+  if(tab==='subjects'){ backToSubjectMatrix(); initSubjects(); }
+  if(tab==='topics')   initTopics();
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+let searchTimer=null;
+function onSearchInput(val){
+  document.getElementById('search-clear-btn').style.display = val ? 'block' : 'none';
+  searchQuery = val.trim();
+  clearTimeout(searchTimer);
+  if(!searchQuery){
+    document.getElementById('search-empty').style.display='block';
+    document.getElementById('search-results').innerHTML='';
+    document.getElementById('search-results-header').textContent='';
+    document.getElementById('search-filter-row').style.display='none';
+    return;
+  }
+  document.getElementById('search-empty').style.display='none';
+  searchTimer = setTimeout(()=>doSearch(searchQuery), 280);
+}
+
+function clearSearch(){
+  document.getElementById('main-search').value='';
+  onSearchInput('');
+}
+
+let searchGradeFilter=null, searchSubjectFilter=null;
+async function doSearch(q){
+  if(!pagesData){
+    document.getElementById('search-results').innerHTML='<div class="loading"><span class="spinner"></span>Loading pages…</div>';
+    await ensurePages();
+  }
+  if(!pagesData){ document.getElementById('search-results').innerHTML='<div class="loading">Failed to load data.</div>'; return; }
+
+  const lq = q.toLowerCase();
+  const words = lq.split(/\s+/).filter(Boolean);
+  const matches = pagesData.filter(p=>{
+    const t = p.text.toLowerCase();
+    return words.every(w=>t.includes(w));
+  });
+
+  // Build filter options
+  const grades   = [...new Set(matches.map(p=>p.grade_label))].sort((a,b)=>gradeOrder(a)-gradeOrder(b));
+  const subjects = [...new Set(matches.map(p=>p.subject))].sort();
+
+  let filtered = matches;
+  if(searchGradeFilter)   filtered = filtered.filter(p=>p.grade_label===searchGradeFilter);
+  if(searchSubjectFilter) filtered = filtered.filter(p=>p.subject===searchSubjectFilter);
+
+  renderSearchFilters(grades, subjects);
+  document.getElementById('search-results-header').textContent = `${filtered.length} result${filtered.length!==1?'s':''} for "${q}"${searchGradeFilter?' · '+searchGradeFilter:''}${searchSubjectFilter?' · '+searchSubjectFilter:''}`;
+  searchPageOffset = 0;
+  searchFilteredCache = filtered;
+  renderSearchResults(filtered.slice(0, RESULTS_PAGE), q);
+}
+
+const RESULTS_PAGE = 50;
+let searchPageOffset = 0;
+let searchFilteredCache = [];
+
+function loadMoreResults(){
+  searchPageOffset += RESULTS_PAGE;
+  const q = searchQuery;
+  const next = searchFilteredCache.slice(searchPageOffset, searchPageOffset + RESULTS_PAGE);
+  const wrap = document.getElementById('search-results');
+  const btn  = document.getElementById('load-more-btn');
+  if(btn) btn.remove();
+  wrap.insertAdjacentHTML('beforeend', next.map(p=>{
+    const snippet = getSnippet(p.text, q);
+    return `<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
+      <div class="page-card-meta">
+        <span class="badge badge-grade">${esc(p.grade_label)}</span>
+        <span class="badge badge-subject">${esc(p.subject)}</span>
+        ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+        <span class="badge badge-page">p.${p.pdf_page}</span>
+      </div>
+      <div class="page-card-text">${mark(snippet, q)}</div>
+    </div>`;
+  }).join(''));
+  if(searchPageOffset + RESULTS_PAGE < searchFilteredCache.length){
+    wrap.insertAdjacentHTML('beforeend', `<div style="text-align:center;padding:16px"><button id="load-more-btn" onclick="loadMoreResults()" style="padding:8px 24px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:.88rem;color:var(--blue)">Load more (${searchFilteredCache.length - searchPageOffset - RESULTS_PAGE} remaining)</button></div>`);
+  }
+}
+
+function renderSearchFilters(grades, subjects){
+  const row = document.getElementById('search-filter-row');
+  row.style.display = 'flex';
+  let html = '<span style="font-size:.8rem;color:var(--muted);align-self:center">Grade:</span>';
+  grades.forEach(g=>{
+    html += `<button class="filter-chip${searchGradeFilter===g?' active':''}" onclick="setSearchGradeFilter('${g}')">${g}</button>`;
+  });
+  html += '<span style="font-size:.8rem;color:var(--muted);align-self:center;margin-left:8px">Subject:</span>';
+  subjects.forEach(s=>{
+    html += `<button class="filter-chip${searchSubjectFilter===s?' active':''}" onclick="setSearchSubjectFilter('${s}')">${esc(s)}</button>`;
+  });
+  row.innerHTML = html;
+}
+
+function setSearchGradeFilter(g){
+  searchGradeFilter = searchGradeFilter===g ? null : g;
+  doSearch(searchQuery);
+}
+function setSearchSubjectFilter(s){
+  searchSubjectFilter = searchSubjectFilter===s ? null : s;
+  doSearch(searchQuery);
+}
+
+function renderSearchResults(pages, q){
+  const wrap = document.getElementById('search-results');
+  if(!pages.length){ wrap.innerHTML='<div class="empty"><div class="empty-icon">😕</div>No results found.</div>'; return; }
+  wrap.innerHTML = pages.map(p=>{
+    const snippet = getSnippet(p.text, q);
+    return `<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
+      <div class="page-card-meta">
+        <span class="badge badge-grade">${esc(p.grade_label)}</span>
+        <span class="badge badge-subject">${esc(p.subject)}</span>
+        ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+        <span class="badge badge-page">p.${p.pdf_page}</span>
+      </div>
+      <div class="page-card-text">${mark(snippet, q)}</div>
+    </div>`;
+  }).join('');
+  if(searchFilteredCache.length > RESULTS_PAGE){
+    wrap.insertAdjacentHTML('beforeend', `<div style="text-align:center;padding:16px"><button id="load-more-btn" onclick="loadMoreResults()" style="padding:8px 24px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:.88rem;color:var(--blue)">Load more (${searchFilteredCache.length - RESULTS_PAGE} remaining)</button></div>`);
+  }
+}
+
+function getSnippet(text, q){
+  const lq = q.toLowerCase();
+  const idx = text.toLowerCase().indexOf(lq.split(/\s+/)[0]);
+  if(idx===-1) return text.slice(0,300);
+  const start = Math.max(0,idx-80);
+  return (start>0?'…':'')+text.slice(start,start+400);
+}
+
+// ── Grades tab ─────────────────────────────────────────────────────────────
+function gradeOrder(label){
+  if(label==='Pre-1') return -1;
+  return parseInt(label.replace('Grade ',''))||0;
+}
+
+async function initGrades(){
+  if(!booksData) await ensureBooks();
+  if(!booksData) return;
+  const grades = [...new Set(booksData.map(b=>b.grade_label))].sort((a,b)=>gradeOrder(a)-gradeOrder(b));
+  const sel = document.getElementById('grade-selector');
+  sel.innerHTML = grades.map(g=>`<button class="grade-pill${currentGrade===g?' active':''}" onclick="selectGrade('${g}')">${g}</button>`).join('');
+  if(!currentGrade && grades.length) selectGrade(grades[0]);
+  closeBook();
+}
+
+function selectGrade(g){
+  currentGrade = g;
+  document.querySelectorAll('.grade-pill').forEach(b=>b.classList.toggle('active',b.textContent===g));
+  const books = booksData.filter(b=>b.grade_label===g);
+  const grid = document.getElementById('grade-subject-grid');
+  const icons = subjectIcon;
+  grid.innerHTML = books.map(b=>`<div class="subject-card" onclick="openBook('${b.id}')">
+    <div class="subject-icon">${icons[b.subject]||'📖'}</div>
+    <div class="subject-name">${esc(b.subject)}</div>
+    <div class="subject-meta">${b.page_count} pages</div>
+  </div>`).join('');
+  document.getElementById('book-view').style.display='none';
+  grid.style.display='grid';
+}
+
+const subjectIcon = {
+  'English':'📝','Math':'🔢','Mathematics':'🔢','Science':'🔬',
+  'General Science':'🔬','Biology':'🧬','Chemistry':'⚗️','Physics':'⚛️',
+  'Computer Science':'💻','Geography':'🌍','History':'🏛️',
+  'Pakistan Studies':'🇵🇰','Statistics':'📊','Home Economics':'🏠',
+  'Unknown':'📖',
+};
+
+// ── Book reader ────────────────────────────────────────────────────────────
+async function openBook(bookId, startPageId=null){
+  if(!pagesData) await ensurePages();
+  if(!pagesData) return;
+  currentBookId = bookId;
+  const book = bookMap[bookId];
+  const pages = pagesData.filter(p=>p.book_id===bookId);
+  currentBookPages = pages;
+
+  document.getElementById('book-view-title').textContent = book?.title||bookId;
+  document.getElementById('grade-subject-grid').style.display='none';
+  document.getElementById('book-view').style.display='block';
+
+  // Build chapter nav
+  const chapters = [];
+  pages.forEach((p,i)=>{
+    if(p.chapter && (!chapters.length || chapters[chapters.length-1].ch !== p.chapter)){
+      chapters.push({ch:p.chapter, idx:i});
+    }
+  });
+  const chList = document.getElementById('chapter-list');
+  chList.innerHTML = chapters.map((c,ci)=>`<div class="ch-item" id="ch-${ci}" data-idx="${c.idx}" onclick="gotoChapter(${c.idx})">${esc(c.ch)}</div>`).join('') || '<div style="color:var(--muted);font-size:.8rem">No chapters detected</div>';
+
+  const startIdx = startPageId ? pages.findIndex(p=>p.id===startPageId) : 0;
+  gotoPageIdx(Math.max(0,startIdx));
+}
+
+function renderOcrText(text){
+  // Convert OCR markdown-like markup to HTML
+  const lines = esc(text).split('\n');
+  let html = '';
+  let inTable = false;
+  for(const raw of lines){
+    const line = raw.trim();
+    if(!line){ if(inTable){ html+='</table>'; inTable=false; } html+='<br>'; continue; }
+    if(line.startsWith('###')){
+      if(inTable){ html+='</table>'; inTable=false; }
+      html+=`<h3>${line.replace(/^###\s*/,'')}</h3>`;
+    } else if(line.startsWith('##')){
+      if(inTable){ html+='</table>'; inTable=false; }
+      html+=`<h4>${line.replace(/^##\s*/,'')}</h4>`;
+    } else if(/^\[Page \d+\]$/.test(line)){
+      if(inTable){ html+='</table>'; inTable=false; }
+      html+=`<div class="page-num">${line}</div>`;
+    } else if(line.startsWith('[DIAGRAM')||line.startsWith('[IMAGE')||line.startsWith('[FIGURE')){
+      if(inTable){ html+='</table>'; inTable=false; }
+      html+=`<div class="diagram-note">${line}</div>`;
+    } else if(line.includes('|')){
+      const cells = line.split('|').map(c=>c.trim()).filter((c,i,a)=>i>0||c);
+      if(!inTable){ html+='<table>'; inTable=true; }
+      const isHeader = cells.some(c=>c==='' || /^[-:]+$/.test(c));
+      if(isHeader) continue;
+      const tag = cells.every(c=>c.length>0) && !html.endsWith('<tr>') ? 'td' : 'td';
+      html+=`<tr>${cells.map(c=>`<${tag}>${c}</${tag}>`).join('')}</tr>`;
+    } else {
+      if(inTable){ html+='</table>'; inTable=false; }
+      if(raw.startsWith('  ') || raw.startsWith('\t')){
+        html+=`<div style="padding-left:20px">${line}</div>`;
+      } else {
+        html+=`<p style="margin:3px 0">${line}</p>`;
+      }
+    }
+  }
+  if(inTable) html+='</table>';
+  return html;
+}
+
+let bookSearchQuery='';
+let bookSearchMatches=[];
+let bookSearchIdx=0;
+
+function bookSearchHighlight(q){
+  bookSearchQuery = q.trim();
+  const showCtrl = q.length>0;
+  document.getElementById('book-search-next').style.display = showCtrl ? 'inline-block' : 'none';
+  document.getElementById('book-search-clear').style.display = showCtrl ? 'inline-block' : 'none';
+  renderCurrentPage();
+  if(bookSearchQuery){
+    setTimeout(()=>{
+      const marks = document.querySelectorAll('#page-content mark');
+      bookSearchMatches = [...marks];
+      bookSearchIdx = 0;
+      if(marks.length) marks[0].scrollIntoView({block:'center'});
+    }, 50);
+  }
+}
+
+function bookSearchNext(){
+  if(!bookSearchMatches.length) return;
+  bookSearchIdx = (bookSearchIdx+1) % bookSearchMatches.length;
+  bookSearchMatches[bookSearchIdx].scrollIntoView({block:'center'});
+}
+
+function bookSearchClear(){
+  document.getElementById('book-search-input').value='';
+  bookSearchHighlight('');
+}
+
+function renderCurrentPage(){
+  const p = currentBookPages[currentPageIdx];
+  if(!p) return;
+  let html = renderOcrText(p.text);
+  if(bookSearchQuery){
+    const words = bookSearchQuery.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').split(/\s+/).filter(Boolean);
+    html = html.replace(new RegExp(`(?<![=">])(${words.join('|')})`, 'gi'), '<mark>$1</mark>');
+  }
+  document.getElementById('page-content').innerHTML = html;
+}
+
+function gotoPageIdx(idx){
+  currentPageIdx = Math.max(0, Math.min(idx, currentBookPages.length-1));
+  const p = currentBookPages[currentPageIdx];
+  if(!p) return;
+  renderCurrentPage();
+  document.getElementById('page-counter').textContent = `Page ${currentPageIdx+1} of ${currentBookPages.length} · PDF p.${p.pdf_page}${p.chapter?' · '+p.chapter:''}`;
+  document.getElementById('btn-prev').disabled = currentPageIdx===0;
+  document.getElementById('btn-next').disabled = currentPageIdx===currentBookPages.length-1;
+  // Scroll page viewer to top
+  document.getElementById('page-viewer').scrollTop = 0;
+  // Update active chapter in nav
+  document.querySelectorAll('.ch-item').forEach(el=>el.classList.remove('active'));
+  const chItems = document.querySelectorAll('.ch-item');
+  const chData = [...chItems].map((el,i)=>({el,idx:parseInt(el.getAttribute('data-idx')||0)}));
+  let activeEl = null;
+  for(const c of chData){ if(c.idx<=currentPageIdx) activeEl=c.el; }
+  if(activeEl){ activeEl.classList.add('active'); activeEl.scrollIntoView({block:'nearest'}); }
+}
+
+function gotoChapter(pageIdx){ gotoPageIdx(pageIdx); }
+function prevPage(){ gotoPageIdx(currentPageIdx-1); }
+function nextPage(){ gotoPageIdx(currentPageIdx+1); }
+
+function closeBook(){
+  document.getElementById('book-view').style.display='none';
+  if(currentGrade) document.getElementById('grade-subject-grid').style.display='grid';
+}
+
+function openBookAtPage(bookId, pageId){
+  switchTab('grades');
+  setTimeout(()=>openBook(bookId, pageId), 50);
+}
+
+// ── Subjects tab ───────────────────────────────────────────────────────────
+async function initSubjects(){
+  if(!booksData) await ensureBooks();
+  if(!booksData) return;
+  const grades   = [...new Set(booksData.map(b=>b.grade_label))].sort((a,b)=>gradeOrder(a)-gradeOrder(b));
+  const subjects = [...new Set(booksData.map(b=>b.subject))].sort();
+  // Build lookup: subject → grade → book
+  const lookup = {};
+  booksData.forEach(b=>{
+    if(!lookup[b.subject]) lookup[b.subject]={};
+    lookup[b.subject][b.grade_label]=b;
+  });
+  let html = `<table class="sm-table"><thead><tr><th>Subject</th>`;
+  grades.forEach(g=>{ html+=`<th>${esc(g)}</th>`; });
+  html += '</tr></thead><tbody>';
+  subjects.forEach(s=>{
+    html += `<tr><td><span class="subject-row-label" onclick="filterTopicsBySubject('${esc(s)}')">${subjectIcon[s]||'📖'} ${esc(s)}</span></td>`;
+    grades.forEach(g=>{
+      const book = lookup[s]?.[g];
+      html += book
+        ? `<td><span class="sm-dot sm-dot-yes" title="${esc(book.title)}" onclick="openBookAtPage('${book.id}',null)">✓</span></td>`
+        : `<td><span class="sm-dot sm-dot-no">·</span></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('subjects-matrix').innerHTML = html;
+}
+
+function filterTopicsBySubject(subject){
+  if(!booksData) return;
+  const books = booksData.filter(b=>b.subject===subject)
+    .sort((a,b)=>(a.grade||0)-(b.grade||0));
+  document.getElementById('subject-detail-title').textContent = subjectIcon[subject]||'📖' + ' ' + subject + ` (${books.length} book${books.length!==1?'s':''})`;
+  document.getElementById('subject-detail-grid').innerHTML = books.map(b=>`<div class="subject-card" onclick="openBookAtPage('${b.id}',null)">
+    <div class="subject-icon">${subjectIcon[b.subject]||'📖'}</div>
+    <div class="subject-name">${esc(b.grade_label)}</div>
+    <div class="subject-meta">${b.page_count} pages</div>
+  </div>`).join('');
+  document.getElementById('subjects-overview').style.display='none';
+  document.getElementById('subject-detail').style.display='block';
+}
+
+function backToSubjectMatrix(){
+  document.getElementById('subject-detail').style.display='none';
+  document.getElementById('subjects-overview').style.display='block';
+}
+
+// ── Topics tab ─────────────────────────────────────────────────────────────
+async function initTopics(){
+  backToTopics();
+  if(!clustersData){
+    const r = document.getElementById('topic-grid');
+    r.innerHTML = '<div class="loading"><span class="spinner"></span>Loading topics…</div>';
+    clustersData = await loadJSON('tb_clusters');
+  }
+  if(!clustersData){ document.getElementById('topic-grid').innerHTML='<div class="empty">Topics not available.</div>'; return; }
+  renderTopicGrid();
+}
+
+function renderTopicGrid(){
+  const maxPages = Math.max(...clustersData.map(c=>c.page_count));
+  document.getElementById('topic-grid').innerHTML = clustersData.map(c=>{
+    const subjBadges = Object.entries(c.subjects||{}).slice(0,3).map(([s,n])=>`<span class="badge badge-subject">${esc(s)} ${n}</span>`).join('');
+    return `<div class="topic-card" onclick="openTopic(${c.id})">
+      <div class="topic-bar"><div class="topic-bar-fill" style="width:${(c.page_count/maxPages*100).toFixed(0)}%"></div></div>
+      <h3>${esc(c.label)}</h3>
+      <div class="topic-words">${esc((c.top_words||[]).slice(0,6).join(', '))}</div>
+      <div class="topic-subjects">${subjBadges}</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:6px">${c.page_count} pages</div>
+    </div>`;
+  }).join('');
+  document.getElementById('topic-detail').style.display='none';
+  document.getElementById('topic-grid').style.display='grid';
+}
+
+async function openTopic(id){
+  if(!pagesData) await ensurePages();
+  const cluster = clustersData.find(c=>c.id===id);
+  if(!cluster) return;
+  const pageIds = new Set(cluster.page_ids);
+  const pages = pagesData.filter(p=>pageIds.has(p.id)).slice(0,50);
+  document.getElementById('topic-detail-title').textContent = cluster.label + ` — ${cluster.page_count} pages`;
+  document.getElementById('topic-detail-pages').innerHTML = pages.map(p=>`<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
+    <div class="page-card-meta">
+      <span class="badge badge-grade">${esc(p.grade_label)}</span>
+      <span class="badge badge-subject">${esc(p.subject)}</span>
+      ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+    </div>
+    <div class="page-card-text">${esc(p.text.slice(0,300))}</div>
+  </div>`).join('');
+  document.getElementById('topic-grid').style.display='none';
+  document.getElementById('topic-detail').style.display='block';
+}
+
+function backToTopics(){
+  document.getElementById('topic-detail').style.display='none';
+  document.getElementById('topic-grid').style.display='grid';
+}
+
+// ── Progression tab ────────────────────────────────────────────────────────
+async function searchProg(){
+  const q = document.getElementById('prog-input').value.trim().toLowerCase();
+  if(!q) return;
+  if(!semData){
+    document.getElementById('prog-result').innerHTML='<div class="loading"><span class="spinner"></span>Loading…</div>';
+    semData = await loadJSON('tb_semantic');
+  }
+  document.getElementById('prog-empty').style.display='none';
+  if(!semData){ document.getElementById('prog-result').innerHTML='<div class="empty">Data not available.</div>'; return; }
+
+  const entry = semData.words[q];
+  if(!entry){ document.getElementById('prog-result').innerHTML=`<div class="empty"><div class="empty-icon">🔎</div>No data for "<strong>${esc(q)}</strong>" — try a more common word.</div>`; return; }
+
+  const grades = semData.grades;
+  const freq   = entry.grades || {};
+  const maxF   = Math.max(1,...Object.values(freq));
+
+  // Chart bars
+  let bars = grades.map(g=>{
+    const count = freq[g]||0;
+    const h = Math.max(2, Math.round(count/maxF*100));
+    return `<div class="prog-bar-wrap">
+      <div class="prog-bar" style="height:${h}px" title="${g}: ${count} times" onclick="showProgGrade('${g}','${q}')"></div>
+      <div class="prog-bar-label">${esc(g)}</div>
+    </div>`;
+  }).join('');
+
+  // Co-words per grade (only grades with occurrences)
+  const coSections = grades.filter(g=>freq[g]>0).map(g=>{
+    const words = (entry.neighbors?.[g]||[]).slice(0,10);
+    if(!words.length) return '';
+    const chips = words.map(w=>`<span class="coword-chip" onclick="setProgWord('${esc(w)}')">${esc(w)}</span>`).join('');
+    return `<div style="margin-bottom:10px"><span style="font-size:.78rem;font-weight:600;color:var(--muted);margin-right:8px">${esc(g)}</span>${chips}</div>`;
+  }).join('');
+
+  document.getElementById('prog-result').innerHTML = `
+    <div class="prog-section">
+      <h3>Frequency across grades — "<strong>${esc(q)}</strong>" (${entry.freq} total occurrences)</h3>
+      <div class="prog-chart">${bars}</div>
+    </div>
+    ${coSections?`<div class="prog-section"><h3>Related words by grade</h3>${coSections}</div>`:''}
+    <div id="prog-grade-detail"></div>
+  `;
+}
+
+function setProgWord(w){
+  document.getElementById('prog-input').value=w;
+  searchProg();
+}
+
+async function showProgGrade(grade, q){
+  if(!pagesData) await ensurePages();
+  const lq = q.toLowerCase();
+  const pages = pagesData.filter(p=>p.grade_label===grade && p.text.toLowerCase().includes(lq)).slice(0,20);
+  const el = document.getElementById('prog-grade-detail');
+  if(!el) return;
+  el.innerHTML = `<div class="prog-section">
+    <h3>${esc(grade)} — pages containing "<strong>${esc(q)}</strong>"</h3>
+    ${pages.map(p=>`<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})">
+      <div class="page-card-meta">
+        <span class="badge badge-subject">${esc(p.subject)}</span>
+        ${p.chapter?`<span class="badge badge-chapter">${esc(p.chapter)}</span>`:''}
+      </div>
+      <div class="page-card-text">${mark(getSnippet(p.text,q),q)}</div>
+    </div>`).join('')}
+  </div>`;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── Data loading helpers ────────────────────────────────────────────────────
+async function ensureBooks(){
+  if(booksData) return;
+  booksData = await loadJSON('tb_books');
+  if(booksData) booksData.forEach(b=>{ bookMap[b.id]=b; });
+}
+
+async function ensurePages(){
+  if(pagesData) return;
+  await ensureBooks();
+  const loading = document.createElement('div');
+  loading.className='loading';
+  loading.innerHTML='<span class="spinner"></span>Loading pages…';
+  document.getElementById('view-grades').prepend(loading);
+  pagesData = await loadJSON('tb_pages');
+  loading.remove();
+  if(pagesData) pagesData.forEach(p=>{ pageMap[p.id]=p; });
+}
+
+// ── Keyboard navigation ────────────────────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(currentBookId && document.getElementById('book-view').style.display!=='none'){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown') { e.preventDefault(); nextPage(); }
+    if(e.key==='ArrowLeft' ||e.key==='ArrowUp')   { e.preventDefault(); prevPage(); }
+    if(e.key==='Escape') closeBook();
+  }
+});
+
+// ── Init ────────────────────────────────────────────────────────────────────
+(async()=>{
+  document.getElementById('search-empty').innerHTML = '<div class="loading"><span class="spinner"></span>Loading…</div>';
+  await ensureBooks();
+  if(booksData && booksData.length > 0){
+    const totalBooks = booksData.length;
+    const grades = new Set(booksData.map(b=>b.grade_label)).size;
+    const subjects = new Set(booksData.map(b=>b.subject)).size;
+    const totalPages = booksData.reduce((s,b)=>s+b.page_count,0);
+    document.getElementById('search-empty').innerHTML = `
+      <div class="empty-icon">📚</div>
+      <div style="font-size:1rem;font-weight:600;margin-bottom:8px">PCTB Textbook Explorer</div>
+      <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
+        <div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${totalBooks}</div><div style="font-size:.8rem;color:var(--muted)">Books</div></div>
+        <div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${grades}</div><div style="font-size:.8rem;color:var(--muted)">Grades</div></div>
+        <div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${subjects}</div><div style="font-size:.8rem;color:var(--muted)">Subjects</div></div>
+        ${totalPages?`<div style="text-align:center"><div style="font-size:1.6rem;font-weight:700;color:var(--blue)">${totalPages.toLocaleString()}</div><div style="font-size:.8rem;color:var(--muted)">Pages</div></div>`:''}
+      </div>
+      <div style="font-size:.88rem;color:var(--muted)">Search across all grades and subjects above</div>
+      <div style="margin-top:10px;font-size:.82rem;color:var(--muted)">Try: <em onclick="document.getElementById('main-search').value='democracy';onSearchInput('democracy')" style="cursor:pointer;color:var(--blue)">democracy</em> · <em onclick="document.getElementById('main-search').value='photosynthesis';onSearchInput('photosynthesis')" style="cursor:pointer;color:var(--blue)">photosynthesis</em> · <em onclick="document.getElementById('main-search').value='Pakistan';onSearchInput('Pakistan')" style="cursor:pointer;color:var(--blue)">Pakistan</em> · <em onclick="document.getElementById('main-search').value='gravity';onSearchInput('gravity')" style="cursor:pointer;color:var(--blue)">gravity</em></div>
+    `;
+  } else {
+    document.getElementById('search-empty').innerHTML = `
+      <div class="empty-icon">📚</div>
+      <div style="font-size:1rem;font-weight:600;margin-bottom:8px">PCTB Textbook Explorer</div>
+      <div style="font-size:.9rem;color:var(--muted);margin-bottom:12px">OCR processing is underway — data will appear here once complete.</div>
+      <div style="font-size:.82rem;color:var(--muted)">This viewer covers Grade Pre-1 through Grade 12 Punjab Curriculum textbooks.<br>
+      Search will work across all subjects once data is ready.</div>
+    `;
+  }
+})();
+</script>
+</body>
+</html>
