@@ -1044,7 +1044,10 @@ function setProgViewMode(mode){
 function setProgView(mode){
   setProgViewMode(mode);
   const q = document.getElementById('prog-input').value.trim().toLowerCase();
-  if(q && semData) renderProgResult(q);
+  if(q && semData){
+    if(mode==='drift') document.getElementById('prog-result').innerHTML='<div class="loading"><span class="spinner"></span>Loading UMAP…</div>';
+    renderProgResult(q);
+  }
 }
 
 
@@ -1183,30 +1186,31 @@ async function renderDriftView(q, entry){
 
   const wordUmap = umapData && umapData.words && umapData.words[q];
   if(wordUmap && activeGrades.filter(g=>wordUmap[g]).length >= 2){
-    // Use precomputed UMAP coords — grades that have UMAP coords
     usingUmap=true;
-    const raw=activeGrades.map(g=>wordUmap[g]||null).filter(Boolean);
-    const rawFull=activeGrades.map(g=>wordUmap[g]||[0,0]);
-    gradeCoords=scaleCoords(rawFull, W, H, PAD);
-    // Neighbor positions: from UMAP coords of the neighbor words at this grade
     const vocab=[...new Set(activeGrades.flatMap(g=>neighbors[g]||[]))];
+    // Collect ALL raw points: target word per grade + each neighbor's average position
+    const allRaw=[];
+    const gradeRaw=activeGrades.map(g=>wordUmap[g]||[0,0]);
+    allRaw.push(...gradeRaw);
+    const nbRaw={};
     vocab.forEach(w=>{
-      const wCoords=umapData.words[w];
-      if(!wCoords) return;
-      const gi=activeGrades.filter(g=>wCoords[g]);
+      const wc=umapData.words[w]; if(!wc) return;
+      const gi=activeGrades.filter(g=>wc[g]);
       if(!gi.length) return;
-      const raw2=gi.map(g=>wCoords[g]);
-      const sx=gi.reduce((s,g)=>s+wCoords[g][0],0)/gi.length;
-      const sy=gi.reduce((s,g)=>s+wCoords[g][1],0)/gi.length;
-      // Scale using same transform as grade coords
-      const xs2=rawFull.map(c=>c[0]),ys2=rawFull.map(c=>c[1]);
-      const mnX=Math.min(...xs2),mxX=Math.max(...xs2),mnY=Math.min(...ys2),mxY=Math.max(...ys2);
-      const rX=(mxX-mnX)||1,rY=(mxY-mnY)||1,pd=.11;
-      nbCoords[w]=[
-        PAD+((sx-mnX)/rX*(1-2*pd)+pd)*(W-2*PAD),
-        H-PAD-((sy-mnY)/rY*(1-2*pd)+pd)*(H-2*PAD)
-      ];
+      const pt=[gi.reduce((s,g)=>s+wc[g][0],0)/gi.length,
+                gi.reduce((s,g)=>s+wc[g][1],0)/gi.length];
+      nbRaw[w]=pt; allRaw.push(pt);
     });
+    // One unified scale for all points
+    const xs=allRaw.map(c=>c[0]),ys=allRaw.map(c=>c[1]);
+    const mnX=Math.min(...xs),mxX=Math.max(...xs),mnY=Math.min(...ys),mxY=Math.max(...ys);
+    const rX=(mxX-mnX)||1,rY=(mxY-mnY)||1,pd=.11;
+    const toSU=([x,y])=>[
+      PAD+((x-mnX)/rX*(1-2*pd)+pd)*(W-2*PAD),
+      H-PAD-((y-mnY)/rY*(1-2*pd)+pd)*(H-2*PAD)
+    ];
+    gradeCoords=gradeRaw.map(toSU);
+    vocab.forEach(w=>{ if(nbRaw[w]) nbCoords[w]=toSU(nbRaw[w]); });
   } else {
     // Fallback: in-browser PCA on neighbor sets
     const vocab=[...new Set(activeGrades.flatMap(g=>neighbors[g]||[]))];
@@ -1375,25 +1379,25 @@ function drawDriftSVG(q,entry,activeGrades,gradeCoords,nbCoords,neighbors,freq,h
   }
 }
 
-function driftOverview(q){
+async function driftOverview(q){
   driftGradeIdx=-1;
   const entry=semData&&semData.words[q];if(!entry)return;
-  renderDriftView(q,entry);
+  await renderDriftView(q,entry);
 }
-function driftNav(dir,q){
+async function driftNav(dir,q){
   if(!semData)return;
   const entry=semData.words[q];if(!entry)return;
   const freq=entry.grades||{},nbrs=entry.neighbors||{};
   const ag=semData.grades.filter(g=>(freq[g]||0)>0||(nbrs[g]||[]).length>0);
   if(driftGradeIdx<0) driftGradeIdx=dir>0?0:ag.length-1;
   else driftGradeIdx=Math.max(0,Math.min(ag.length-1,driftGradeIdx+dir));
-  renderDriftView(q,entry);
+  await renderDriftView(q,entry);
 }
-function driftJump(idx,q){
+async function driftJump(idx,q){
   if(!semData||idx<0)return;
   driftGradeIdx=idx;
   const entry=semData.words[q];if(!entry)return;
-  renderDriftView(q,entry);
+  await renderDriftView(q,entry);
 }
 
 
