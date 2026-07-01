@@ -1138,26 +1138,23 @@ function setBiasView(mode, el){
   el.classList.add('active');
   renderBiasView(mode);
 }
+let biasFilter = '';
 function renderBiasView(mode){
   if(!biasData) return;
   const el = document.getElementById('bias-content');
   if(mode==='gender'){
     const male   = biasData.male   || [];
     const female = biasData.female || [];
-    // bar chart: score 0=female(left) 1=male(right), midpoint=0.5
-    const all = [...female.slice(0,60).reverse(), ...male.slice(0,60)];
-    const midY = all.findIndex(d=>d.score>=0.5);
     el.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div>
-          <div style="font-size:.78rem;font-weight:600;color:var(--green);margin-bottom:10px">Female-coded words (score closer to 0)</div>
-          ${female.slice(0,60).map(d=>biasBar(d,'female')).join('')}
-        </div>
-        <div>
-          <div style="font-size:.78rem;font-weight:600;color:var(--blue);margin-bottom:10px">Male-coded words (score closer to 1)</div>
-          ${male.slice(0,60).map(d=>biasBar(d,'male')).join('')}
-        </div>
+      <div style="margin-bottom:12px">
+        <input type="text" id="bias-filter-input" placeholder="Filter words…" value="${esc(biasFilter)}"
+          oninput="biasFilter=this.value;renderBiasGender()"
+          style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:.85rem;width:240px;outline:none">
+        <span id="bias-filter-count" style="font-size:.78rem;color:var(--muted);margin-left:10px"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" id="bias-gender-cols">
       </div>`;
+    renderBiasGender();
   } else {
     const entries = (biasData[mode]||[]);
     el.innerHTML = `<div style="max-width:600px">
@@ -1165,6 +1162,26 @@ function renderBiasView(mode){
       ${entries.map(d=>biasBarFull(d)).join('')}
     </div>`;
   }
+}
+function renderBiasGender(){
+  const male   = biasData.male   || [];
+  const female = biasData.female || [];
+  const q = biasFilter.trim().toLowerCase();
+  const mf = q ? male.filter(d=>d.word.includes(q))   : male;
+  const ff = q ? female.filter(d=>d.word.includes(q)) : female;
+  const cols = document.getElementById('bias-gender-cols');
+  if(!cols) return;
+  cols.innerHTML = `
+    <div>
+      <div style="font-size:.78rem;font-weight:600;color:var(--green);margin-bottom:10px">Female-coded words (${ff.length})</div>
+      ${ff.map(d=>biasBar(d,'female')).join('') || '<div style="color:var(--muted);font-size:.8rem">No matches</div>'}
+    </div>
+    <div>
+      <div style="font-size:.78rem;font-weight:600;color:var(--blue);margin-bottom:10px">Male-coded words (${mf.length})</div>
+      ${mf.map(d=>biasBar(d,'male')).join('') || '<div style="color:var(--muted);font-size:.8rem">No matches</div>'}
+    </div>`;
+  const countEl = document.getElementById('bias-filter-count');
+  if(countEl) countEl.textContent = q ? `${mf.length + ff.length} matches` : `${male.length + female.length} total words`;
 }
 function biasBar(d, side){
   const pct = side==='male' ? d.score*100 : (1-d.score)*100;
