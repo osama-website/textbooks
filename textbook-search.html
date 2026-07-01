@@ -1112,7 +1112,7 @@ async function renderProgResult(q){
     </svg></div>`;
   }
   const coSections = grades.filter(g=>(freq[g]||0)>0).map(g=>{
-    const cowords = (entry.neighbors?.[g]||[]).slice(0,10);
+    const cowords = (entry.neighbors?.[g]||[]).slice(0,20);
     if(!cowords.length) return '';
     const chips = cowords.map(w=>`<span class="coword-chip" onclick="setProgWordAndSearch('${esc(w)}')">${esc(w)}</span>`).join('');
     return `<div style="margin-bottom:8px"><span style="font-size:.75rem;font-weight:600;color:var(--muted);margin-right:8px">${esc(g)}</span>${chips}</div>`;
