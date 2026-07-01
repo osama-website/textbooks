@@ -204,6 +204,28 @@ table.sm-table tr:hover td{background:var(--blue-light)}
 .coword-chip{padding:3px 10px;border-radius:12px;background:var(--blue-light);color:var(--blue);font-size:.78rem;cursor:pointer}
 .coword-chip:hover{background:var(--blue);color:#fff}
 
+/* semantic drift view */
+.drift-view{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.drift-grade-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+.drift-grade-pip{padding:4px 10px;border-radius:12px;border:1px solid var(--border);font-size:.72rem;cursor:pointer;color:var(--muted);background:var(--card);transition:all .12s}
+.drift-grade-pip.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.drift-grade-pip.has-data{border-color:var(--blue-mid);color:var(--blue)}
+.drift-nav{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.drift-nav-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:50%;background:var(--card);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.drift-nav-btn:hover:not(:disabled){background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+.drift-nav-btn:disabled{opacity:.35;cursor:default}
+.drift-active-grade{font-weight:700;font-size:.95rem;flex:1}
+.drift-freq-pill{font-size:.75rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:2px 8px}
+.drift-neighbors{display:flex;flex-wrap:wrap;gap:8px;min-height:60px}
+.drift-nbr{padding:5px 13px;border-radius:14px;font-size:.82rem;cursor:pointer;transition:all .15s;border:1.5px solid}
+.drift-nbr.new-word{background:#e8f4ec;border-color:#2e7d32;color:#1a6b3a}
+.drift-nbr.kept-word{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+.drift-nbr.drop-word{background:#fff3e0;border-color:#f57c00;color:#b85c00}
+.drift-nbr:hover{filter:brightness(.93)}
+.drift-legend{display:flex;gap:14px;font-size:.72rem;color:var(--muted);margin-top:14px;flex-wrap:wrap}
+.drift-legend span{display:flex;align-items:center;gap:4px}
+.drift-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
 /* ── Map ── */
 #leaflet-map{height:520px;border-radius:var(--radius);border:1px solid var(--border)}
 #map-detail-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;max-height:520px;overflow-y:auto}
@@ -350,6 +372,7 @@ table.sm-table tr:hover td{background:var(--blue-light)}
     <div class="view-toggle">
       <button class="view-toggle-btn active" id="prog-freq-btn" onclick="setProgView('freq')">Bar</button>
       <button class="view-toggle-btn" id="prog-line-btn" onclick="setProgView('line')">Line</button>
+      <button class="view-toggle-btn" id="prog-drift-btn" onclick="setProgView('drift')">Drift</button>
     </div>
   </div>
   <div class="prog-layout">
@@ -1020,6 +1043,7 @@ function setProgViewMode(mode){
   progViewMode = mode;
   document.getElementById('prog-freq-btn').classList.toggle('active', mode==='freq');
   document.getElementById('prog-line-btn').classList.toggle('active', mode==='line');
+  document.getElementById('prog-drift-btn').classList.toggle('active', mode==='drift');
 }
 function setProgView(mode){
   setProgViewMode(mode);
@@ -1048,10 +1072,16 @@ async function searchProg(){
   renderProgResult(q);
 }
 
+let driftGradeIdx = 0;
+
 function renderProgResult(q){
   const entry = semData.words[q];
   if(!entry){
     document.getElementById('prog-result').innerHTML=`<div class="empty"><div class="empty-icon">🔎</div>No data for "<strong>${esc(q)}</strong>" — try a more common word.</div>`;
+    return;
+  }
+  if(progViewMode==='drift'){
+    renderDriftView(q, entry);
     return;
   }
   const grades = semData.grades;
@@ -1100,6 +1130,101 @@ function renderProgResult(q){
     </div>
     ${coSections?`<div class="prog-section"><h3>Related words by grade — click to explore</h3>${coSections}</div>`:''}
     <div id="prog-grade-detail"></div>`;
+}
+
+function renderDriftView(q, entry){
+  const grades = semData.grades;
+  const freq   = entry.grades || {};
+  const neighbors = entry.neighbors || {};
+  // Only grades where the word appears
+  const activeGrades = grades.filter(g=> (freq[g]||0) > 0 || (neighbors[g]||[]).length > 0);
+  if(!activeGrades.length){
+    document.getElementById('prog-result').innerHTML=`<div class="empty">No neighbor data for "<strong>${esc(q)}</strong>".</div>`;
+    return;
+  }
+  driftGradeIdx = Math.min(driftGradeIdx, activeGrades.length - 1);
+
+  const pips = grades.map((g,i)=>{
+    const active = g === activeGrades[driftGradeIdx];
+    const hasData = activeGrades.includes(g);
+    return `<button class="drift-grade-pip${active?' active':''}${hasData?' has-data':''}"
+      onclick="driftJump(${activeGrades.indexOf(g)},'${esc(q)}')"
+      ${hasData?'':' disabled style="opacity:.3;cursor:default"'}>${esc(g.replace('Grade ','G'))}</button>`;
+  }).join('');
+
+  document.getElementById('prog-result').innerHTML = `
+    <div class="drift-view">
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">
+        Semantic neighborhood of <strong>${esc(q)}</strong> across grades. Step through to see how context changes.
+      </div>
+      <div class="drift-grade-bar">${pips}</div>
+      <div id="drift-step-content"></div>
+      <div class="drift-legend">
+        <span><span class="drift-legend-dot" style="background:#2e7d32"></span>New this grade</span>
+        <span><span class="drift-legend-dot" style="background:var(--blue-mid)"></span>Carried over</span>
+        <span><span class="drift-legend-dot" style="background:#f57c00"></span>Drops next grade</span>
+      </div>
+    </div>
+    <div id="prog-grade-detail"></div>`;
+  renderDriftStep(q, entry, activeGrades);
+}
+
+function renderDriftStep(q, entry, activeGrades){
+  const idx  = driftGradeIdx;
+  const g    = activeGrades[idx];
+  const freq = entry.grades || {};
+  const neighbors = entry.neighbors || {};
+  const cur  = new Set(neighbors[g] || []);
+  const prev = new Set(neighbors[activeGrades[idx-1]] || []);
+  const next = new Set(neighbors[activeGrades[idx+1]] || []);
+
+  const chips = [...cur].map(w=>{
+    const isNew  = !prev.has(w);
+    const drops  = next.size > 0 && !next.has(w);
+    const cls    = isNew ? 'new-word' : drops ? 'drop-word' : 'kept-word';
+    return `<button class="drift-nbr ${cls}" onclick="setProgWordAndSearch('${esc(w)}')">${esc(w)}</button>`;
+  }).join('');
+
+  const content = document.getElementById('drift-step-content');
+  if(!content) return;
+  content.innerHTML = `
+    <div class="drift-nav">
+      <button class="drift-nav-btn" onclick="driftNav(-1,'${esc(q)}')" ${idx===0?'disabled':''}>&#8592;</button>
+      <div>
+        <div class="drift-active-grade">${esc(g)}</div>
+        <div style="font-size:.75rem;color:var(--muted)">${idx+1} of ${activeGrades.length} grades · ${freq[g]||0} occurrences</div>
+      </div>
+      <button class="drift-nav-btn" onclick="driftNav(1,'${esc(q)}')" ${idx===activeGrades.length-1?'disabled':''}>&#8594;</button>
+      <button style="margin-left:auto;font-size:.75rem;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;color:var(--muted)" onclick="showProgGrade('${esc(g)}','${esc(q)}')">See pages</button>
+    </div>
+    <div class="drift-neighbors">${chips || '<span style="color:var(--muted);font-size:.82rem">No neighbors recorded for this grade.</span>'}</div>`;
+
+  // Update pip highlights
+  document.querySelectorAll('.drift-grade-pip').forEach((el,i)=>{
+    el.classList.toggle('active', el.textContent === g.replace('Grade ','G'));
+  });
+}
+
+function driftNav(dir, q){
+  if(!semData) return;
+  const entry = semData.words[q]; if(!entry) return;
+  const grades = semData.grades;
+  const freq   = entry.grades || {};
+  const neighbors = entry.neighbors || {};
+  const activeGrades = grades.filter(g=>(freq[g]||0)>0||(neighbors[g]||[]).length>0);
+  driftGradeIdx = Math.max(0, Math.min(activeGrades.length-1, driftGradeIdx + dir));
+  renderDriftStep(q, entry, activeGrades);
+}
+
+function driftJump(idx, q){
+  if(!semData || idx < 0) return;
+  driftGradeIdx = idx;
+  const entry = semData.words[q]; if(!entry) return;
+  const grades = semData.grades;
+  const freq   = entry.grades || {};
+  const neighbors = entry.neighbors || {};
+  const activeGrades = grades.filter(g=>(freq[g]||0)>0||(neighbors[g]||[]).length>0);
+  renderDriftStep(q, entry, activeGrades);
 }
 
 async function showProgGrade(grade, q){
