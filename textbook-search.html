@@ -204,27 +204,23 @@ table.sm-table tr:hover td{background:var(--blue-light)}
 .coword-chip{padding:3px 10px;border-radius:12px;background:var(--blue-light);color:var(--blue);font-size:.78rem;cursor:pointer}
 .coword-chip:hover{background:var(--blue);color:#fff}
 
-/* semantic drift view */
-.drift-view{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-.drift-grade-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
-.drift-grade-pip{padding:4px 10px;border-radius:12px;border:1px solid var(--border);font-size:.72rem;cursor:pointer;color:var(--muted);background:var(--card);transition:all .12s}
+/* semantic drift / timeline view */
+.drift-tl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.drift-tl-header{padding:14px 18px 0;font-size:.8rem;color:var(--muted)}
+#drift-tl-svg{display:block;width:100%;cursor:default}
+.drift-tl-nav{display:flex;align-items:center;gap:10px;padding:10px 18px 14px;border-top:1px solid var(--border);background:var(--bg)}
+.drift-nav-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:50%;background:var(--card);cursor:pointer;font-size:.95rem;color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.drift-nav-btn:hover:not(:disabled){background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
+.drift-nav-btn:disabled{opacity:.3;cursor:default}
+.drift-active-grade{font-weight:700;font-size:.9rem}
+.drift-grade-bar{display:flex;gap:3px;flex-wrap:wrap;flex:1;justify-content:center}
+.drift-grade-pip{padding:3px 8px;border-radius:10px;border:1px solid var(--border);font-size:.68rem;cursor:pointer;color:var(--muted);background:var(--card);transition:all .1s;white-space:nowrap}
 .drift-grade-pip.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .drift-grade-pip.has-data{border-color:var(--blue-mid);color:var(--blue)}
-.drift-nav{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.drift-nav-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:50%;background:var(--card);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--muted)}
-.drift-nav-btn:hover:not(:disabled){background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
-.drift-nav-btn:disabled{opacity:.35;cursor:default}
-.drift-active-grade{font-weight:700;font-size:.95rem;flex:1}
-.drift-freq-pill{font-size:.75rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:2px 8px}
-.drift-neighbors{display:flex;flex-wrap:wrap;gap:8px;min-height:60px}
-.drift-nbr{padding:5px 13px;border-radius:14px;font-size:.82rem;cursor:pointer;transition:all .15s;border:1.5px solid}
-.drift-nbr.new-word{background:#e8f4ec;border-color:#2e7d32;color:#1a6b3a}
-.drift-nbr.kept-word{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue)}
-.drift-nbr.drop-word{background:#fff3e0;border-color:#f57c00;color:#b85c00}
-.drift-nbr:hover{filter:brightness(.93)}
-.drift-legend{display:flex;gap:14px;font-size:.72rem;color:var(--muted);margin-top:14px;flex-wrap:wrap}
+.drift-grade-pip:disabled{opacity:.28;cursor:default;pointer-events:none}
+.drift-legend{display:flex;gap:12px;font-size:.7rem;color:var(--muted);padding:0 18px 12px;flex-wrap:wrap}
 .drift-legend span{display:flex;align-items:center;gap:4px}
-.drift-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.drift-legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
 
 /* ── Map ── */
 #leaflet-map{height:520px;border-radius:var(--radius);border:1px solid var(--border)}
@@ -1072,160 +1068,240 @@ async function searchProg(){
   renderProgResult(q);
 }
 
-let driftGradeIdx = 0;
+let driftGradeIdx = -1; // -1 = overview
+let driftWord = null;
 
-function renderProgResult(q){
-  const entry = semData.words[q];
-  if(!entry){
-    document.getElementById('prog-result').innerHTML=`<div class="empty"><div class="empty-icon">🔎</div>No data for "<strong>${esc(q)}</strong>" — try a more common word.</div>`;
-    return;
+// ── In-browser PCA (power iteration, top 2 PCs) ────────────────────
+function pca2D(matrix){
+  const n=matrix.length, d=matrix[0].length;
+  if(n<2||d<2) return matrix.map((_,i)=>[i/(n||1)*2-1,0]);
+  const mean=new Array(d).fill(0);
+  matrix.forEach(r=>r.forEach((v,j)=>mean[j]+=v/n));
+  const X=matrix.map(r=>r.map((v,j)=>v-mean[j]));
+  function powerIter(M,iters=40){
+    let v=new Array(d).fill(0).map((_,i)=>Math.sin(i+1));
+    for(let k=0;k<iters;k++){
+      const Xv=M.map(r=>r.reduce((s,x,j)=>s+x*v[j],0));
+      const XtXv=new Array(d).fill(0);
+      for(let i=0;i<n;i++) for(let j=0;j<d;j++) XtXv[j]+=M[i][j]*Xv[i];
+      const nrm=Math.sqrt(XtXv.reduce((s,x)=>s+x*x,0))||1;
+      v=XtXv.map(x=>x/nrm);
+    }
+    return{v, scores:M.map(r=>r.reduce((s,x,j)=>s+x*v[j],0))};
   }
-  if(progViewMode==='drift'){
-    renderDriftView(q, entry);
-    return;
-  }
-  const grades = semData.grades;
-  const freq   = entry.grades || {};
-  const maxF   = Math.max(1,...Object.values(freq));
-
-  let chartHtml = '';
-  if(progViewMode==='freq'){
-    const bars = grades.map(g=>{
-      const count = freq[g]||0;
-      const h = Math.max(2, Math.round(count/maxF*100));
-      return `<div class="prog-bar-wrap">
-        <div class="prog-bar-val">${count||''}</div>
-        <div class="prog-bar" style="height:${h}px" title="${g}: ${count} times" onclick="showProgGrade('${g}','${q}')"></div>
-        <div class="prog-bar-label">${esc(g.replace('Grade ','G'))}</div>
-      </div>`;
-    }).join('');
-    chartHtml = `<div class="prog-chart">${bars}</div>`;
-  } else {
-    // SVG line chart
-    const W=560, H=140, padL=30, padR=10, padT=10, padB=30;
-    const pts = grades.map((g,i)=>({ x:padL+(W-padL-padR)*i/(grades.length-1), y:padT+(H-padT-padB)*(1-(freq[g]||0)/maxF), g, v:freq[g]||0 }));
-    const pathD = pts.map((p,i)=>(i===0?'M':'L')+`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    const dots = pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${p.v?'var(--blue-mid)':'var(--border)'}" stroke="${p.v?'var(--blue)':'#ccc'}" stroke-width="1.5" style="cursor:pointer" onclick="showProgGrade('${p.g}','${q}')" title="${p.g}: ${p.v}"><title>${p.g}: ${p.v} occurrences</title></circle>`).join('');
-    const labels = pts.map(p=>`<text x="${p.x.toFixed(1)}" y="${(H-padB+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)">${p.g.replace('Grade ','G')}</text>`).join('');
-    const vals = pts.filter(p=>p.v>0).map(p=>`<text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--blue)" font-weight="600">${p.v}</text>`).join('');
-    chartHtml = `<div class="prog-line-wrap"><svg id="prog-line-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
-      <path d="${pathD}" fill="none" stroke="var(--blue-mid)" stroke-width="2" opacity=".7"/>
-      <path d="${pathD} L${pts[pts.length-1].x.toFixed(1)},${(H-padB).toFixed(1)} L${pts[0].x.toFixed(1)},${(H-padB).toFixed(1)} Z" fill="var(--blue-mid)" opacity=".08"/>
-      ${dots}${vals}${labels}
-    </svg></div>`;
-  }
-
-  // Co-words section
-  const coSections = grades.filter(g=>(freq[g]||0)>0).map(g=>{
-    const cowords = (entry.neighbors?.[g]||[]).slice(0,10);
-    if(!cowords.length) return '';
-    const chips = cowords.map(w=>`<span class="coword-chip" onclick="setProgWordAndSearch('${esc(w)}')">${esc(w)}</span>`).join('');
-    return `<div style="margin-bottom:8px"><span style="font-size:.75rem;font-weight:600;color:var(--muted);margin-right:8px">${esc(g)}</span>${chips}</div>`;
-  }).join('');
-
-  document.getElementById('prog-result').innerHTML = `
-    <div class="prog-section">
-      <h3>"${esc(q)}" — ${entry.freq} total occurrences across grades</h3>
-      ${chartHtml}
-    </div>
-    ${coSections?`<div class="prog-section"><h3>Related words by grade — click to explore</h3>${coSections}</div>`:''}
-    <div id="prog-grade-detail"></div>`;
+  const pc1=powerIter(X);
+  const X2=X.map((r,i)=>r.map((x,j)=>x-pc1.scores[i]*pc1.v[j]));
+  const pc2=powerIter(X2);
+  return matrix.map((_,i)=>[pc1.scores[i],pc2.scores[i]]);
 }
 
 function renderDriftView(q, entry){
-  const grades = semData.grades;
-  const freq   = entry.grades || {};
-  const neighbors = entry.neighbors || {};
-  // Only grades where the word appears
-  const activeGrades = grades.filter(g=> (freq[g]||0) > 0 || (neighbors[g]||[]).length > 0);
+  const allGrades=semData.grades;
+  const freq=entry.grades||{}, neighbors=entry.neighbors||{};
+  const activeGrades=allGrades.filter(g=>(freq[g]||0)>0||(neighbors[g]||[]).length>0);
   if(!activeGrades.length){
     document.getElementById('prog-result').innerHTML=`<div class="empty">No neighbor data for "<strong>${esc(q)}</strong>".</div>`;
     return;
   }
-  driftGradeIdx = Math.min(driftGradeIdx, activeGrades.length - 1);
+  driftWord=q;
+  if(driftGradeIdx>=activeGrades.length) driftGradeIdx=-1;
 
-  const pips = grades.map((g,i)=>{
-    const active = g === activeGrades[driftGradeIdx];
-    const hasData = activeGrades.includes(g);
-    return `<button class="drift-grade-pip${active?' active':''}${hasData?' has-data':''}"
+  // Build vocab + PCA coords
+  const vocab=[...new Set(activeGrades.flatMap(g=>neighbors[g]||[]))];
+  const vIdx=Object.fromEntries(vocab.map((w,i)=>[w,i]));
+  const matrix=activeGrades.map(g=>{
+    const v=new Array(vocab.length).fill(0);
+    (neighbors[g]||[]).forEach(w=>{if(vIdx[w]!=null)v[vIdx[w]]=1;});
+    return v;
+  });
+  const raw=pca2D(matrix);
+  const W=640,H=370,PAD=52;
+  const xs=raw.map(c=>c[0]),ys=raw.map(c=>c[1]);
+  const mnX=Math.min(...xs),mxX=Math.max(...xs),mnY=Math.min(...ys),mxY=Math.max(...ys);
+  const rX=(mxX-mnX)||1,rY=(mxY-mnY)||1,pd=.11;
+  const toS=([x,y])=>[
+    PAD+((x-mnX)/rX*(1-2*pd)+pd)*(W-2*PAD),
+    H-PAD-((y-mnY)/rY*(1-2*pd)+pd)*(H-2*PAD)
+  ];
+  const gradeCoords=raw.map(toS);
+  const nbCoords={};
+  vocab.forEach(w=>{
+    const gi=activeGrades.map((g,i)=>((neighbors[g]||[]).includes(w)?i:-1)).filter(i=>i>=0);
+    if(!gi.length)return;
+    nbCoords[w]=[gi.reduce((s,i)=>s+gradeCoords[i][0],0)/gi.length,
+                 gi.reduce((s,i)=>s+gradeCoords[i][1],0)/gi.length];
+  });
+
+  const pips=allGrades.map(g=>{
+    const hi=activeGrades.includes(g);
+    const act=driftGradeIdx>=0&&activeGrades[driftGradeIdx]===g;
+    return `<button class="drift-grade-pip${act?' active':''}${hi?' has-data':''}"
       onclick="driftJump(${activeGrades.indexOf(g)},'${esc(q)}')"
-      ${hasData?'':' disabled style="opacity:.3;cursor:default"'}>${esc(g.replace('Grade ','G'))}</button>`;
+      ${hi?'':'disabled'}>${esc(g.replace('Grade ','G'))}</button>`;
   }).join('');
 
-  document.getElementById('prog-result').innerHTML = `
-    <div class="drift-view">
-      <div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">
-        Semantic neighborhood of <strong>${esc(q)}</strong> across grades. Step through to see how context changes.
+  const overviewLink=driftGradeIdx>=0
+    ?`<span style="margin-left:10px;font-size:.72rem;color:var(--blue-mid);cursor:pointer;text-decoration:underline" onclick="driftOverview('${esc(q)}')">← Overview</span>`:'';
+
+  document.getElementById('prog-result').innerHTML=`
+    <div class="drift-tl-wrap">
+      <div class="drift-tl-header">
+        Semantic trajectory of <strong>${esc(q)}</strong> · ${entry.freq} occurrences · ${activeGrades.length} active grades
+        ${overviewLink}
+        ${driftGradeIdx>=0?`<span style="margin-left:8px;font-size:.72rem;padding:2px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--muted)" onclick="showProgGrade('${esc(activeGrades[driftGradeIdx])}','${esc(q)}')">📄 See pages</span>`:''}
       </div>
-      <div class="drift-grade-bar">${pips}</div>
-      <div id="drift-step-content"></div>
+      <svg id="drift-tl-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block"></svg>
+      <div class="drift-tl-nav">
+        <button class="drift-nav-btn" id="drift-prev-btn" onclick="driftNav(-1,'${esc(q)}')" ${driftGradeIdx<=0?'disabled':''}>&#8592;</button>
+        <div class="drift-grade-bar">${pips}</div>
+        <button class="drift-nav-btn" id="drift-next-btn" onclick="driftNav(1,'${esc(q)}')" ${driftGradeIdx<0||driftGradeIdx>=activeGrades.length-1?'disabled':''}>&#8594;</button>
+      </div>
       <div class="drift-legend">
-        <span><span class="drift-legend-dot" style="background:#2e7d32"></span>New this grade</span>
-        <span><span class="drift-legend-dot" style="background:var(--blue-mid)"></span>Carried over</span>
-        <span><span class="drift-legend-dot" style="background:#f57c00"></span>Drops next grade</span>
+        <span><span class="drift-legend-dot" style="background:#2e7d32"></span>New neighbor this grade</span>
+        <span><span class="drift-legend-dot" style="background:#e65100"></span>Drops next grade</span>
+        <span><span class="drift-legend-dot" style="background:#e8833a"></span>Continuing neighbor</span>
+        <span><span class="drift-legend-dot" style="background:#1a4f8a"></span>Grade node (click = step in / see pages)</span>
       </div>
     </div>
     <div id="prog-grade-detail"></div>`;
-  renderDriftStep(q, entry, activeGrades);
+
+  drawDriftSVG(q,entry,activeGrades,gradeCoords,nbCoords,neighbors,freq,driftGradeIdx);
 }
 
-function renderDriftStep(q, entry, activeGrades){
-  const idx  = driftGradeIdx;
-  const g    = activeGrades[idx];
-  const freq = entry.grades || {};
-  const neighbors = entry.neighbors || {};
-  const cur  = new Set(neighbors[g] || []);
-  const prev = new Set(neighbors[activeGrades[idx-1]] || []);
-  const next = new Set(neighbors[activeGrades[idx+1]] || []);
+function drawDriftSVG(q,entry,activeGrades,gradeCoords,nbCoords,neighbors,freq,hlIdx){
+  const svg=document.getElementById('drift-tl-svg');
+  if(!svg)return;
+  svg.innerHTML='';
+  const W=640,H=370,n=activeGrades.length;
+  function svgEl(tag,attrs){
+    const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));
+    return e;
+  }
+  // Arrow markers
+  const defs=svgEl('defs',{});
+  function mkArrow(id,col){
+    const m=svgEl('marker',{id,markerWidth:'5',markerHeight:'5',refX:'4',refY:'2.5',orient:'auto'});
+    const p=svgEl('polygon',{points:'0 0,5 2.5,0 5',fill:col});
+    m.appendChild(p);defs.appendChild(m);
+  }
+  mkArrow('arr','#1a4f8a'); mkArrow('arrF','#bbb');
+  svg.appendChild(defs);
 
-  const chips = [...cur].map(w=>{
-    const isNew  = !prev.has(w);
-    const drops  = next.size > 0 && !next.has(w);
-    const cls    = isNew ? 'new-word' : drops ? 'drop-word' : 'kept-word';
-    return `<button class="drift-nbr ${cls}" onclick="setProgWordAndSearch('${esc(w)}')">${esc(w)}</button>`;
-  }).join('');
+  function pathStr(pts){return pts.map(([x,y],i)=>(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)).join(' ');}
 
-  const content = document.getElementById('drift-step-content');
-  if(!content) return;
-  content.innerHTML = `
-    <div class="drift-nav">
-      <button class="drift-nav-btn" onclick="driftNav(-1,'${esc(q)}')" ${idx===0?'disabled':''}>&#8592;</button>
-      <div>
-        <div class="drift-active-grade">${esc(g)}</div>
-        <div style="font-size:.75rem;color:var(--muted)">${idx+1} of ${activeGrades.length} grades · ${freq[g]||0} occurrences</div>
-      </div>
-      <button class="drift-nav-btn" onclick="driftNav(1,'${esc(q)}')" ${idx===activeGrades.length-1?'disabled':''}>&#8594;</button>
-      <button style="margin-left:auto;font-size:.75rem;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;color:var(--muted)" onclick="showProgGrade('${esc(g)}','${esc(q)}')">See pages</button>
-    </div>
-    <div class="drift-neighbors">${chips || '<span style="color:var(--muted);font-size:.82rem">No neighbors recorded for this grade.</span>'}</div>`;
+  if(hlIdx<0){
+    // Overview: animated trajectory + grade dots + labels
+    const tLen=1100;
+    svg.appendChild(Object.assign(svgEl('path',{d:pathStr(gradeCoords),fill:'none',stroke:'#c5d5e8','stroke-width':'2','stroke-dasharray':'5 3'}),{}));
+    const traj=svgEl('path',{d:pathStr(gradeCoords),fill:'none',stroke:'#1a4f8a','stroke-width':'2.5','marker-end':'url(#arr)'});
+    traj.setAttribute('stroke-dasharray',tLen);traj.setAttribute('stroke-dashoffset',tLen);
+    const anim=svgEl('animate',{attributeName:'stroke-dashoffset',from:tLen,to:'0',dur:'1.1s',fill:'freeze'});
+    traj.appendChild(anim);svg.appendChild(traj);
 
-  // Update pip highlights
-  document.querySelectorAll('.drift-grade-pip').forEach((el,i)=>{
-    el.classList.toggle('active', el.textContent === g.replace('Grade ','G'));
-  });
+    gradeCoords.forEach(([cx,cy],i)=>{
+      const g=activeGrades[i];
+      const t=n>1?i/(n-1):0;
+      const fill=`rgb(${Math.round(26+80*t)},${Math.round(79-20*t)},${Math.round(138-88*t)})`;
+      const c=svgEl('circle',{cx:cx.toFixed(1),cy:cy.toFixed(1),r:'8',fill,stroke:'#fff','stroke-width':'2',cursor:'pointer'});
+      c.addEventListener('click',()=>driftJump(i,q));
+      c.appendChild(Object.assign(svgEl('title',{})));
+      c.querySelector('title').textContent=`${g} (${freq[g]||0}×) — click to explore`;
+      svg.appendChild(c);
+      // Grade label
+      const anchor=cx>W*.62?'end':'start';
+      const lx=(cx+(anchor==='end'?-13:13)).toFixed(1);
+      const glbl=svgEl('text',{x:lx,y:(cy-4).toFixed(1),'font-size':'9.5','font-weight':'700',fill:'#1a4f8a','text-anchor':anchor,'paint-order':'stroke fill',stroke:'#fff','stroke-width':'2.5'});
+      glbl.textContent=g.replace('Grade ','G');svg.appendChild(glbl);
+      // Freq count
+      const fcnt=svgEl('text',{x:lx,y:(cy+8).toFixed(1),'font-size':'8',fill:'#6b7694','text-anchor':anchor,'paint-order':'stroke fill',stroke:'#fff','stroke-width':'2'});
+      fcnt.textContent=`${freq[g]||0}×`;svg.appendChild(fcnt);
+      // Top 3 neighbors
+      let nbY=cy+19;
+      (neighbors[g]||[]).slice(0,3).forEach(w=>{
+        const nt=svgEl('text',{x:lx,y:nbY.toFixed(1),'font-size':'8',fill:'#7a3a00','text-anchor':anchor,'paint-order':'stroke fill',stroke:'#fff','stroke-width':'2',cursor:'pointer'});
+        nt.textContent=w;nt.addEventListener('click',e=>{e.stopPropagation();setProgWordAndSearch(w);});
+        svg.appendChild(nt);nbY+=10;
+      });
+    });
+  } else {
+    // Step mode
+    const [mx,my]=gradeCoords[hlIdx];
+    const g=activeGrades[hlIdx];
+    const curNb=neighbors[g]||[];
+    const prevNb=new Set(neighbors[activeGrades[hlIdx-1]]||[]);
+    const nextNb=new Set(neighbors[activeGrades[hlIdx+1]]||[]);
+
+    // Ghost full path
+    if(gradeCoords.length>=2)svg.appendChild(svgEl('path',{d:pathStr(gradeCoords),fill:'none',stroke:'#dde3ee','stroke-width':'1.5','stroke-dasharray':'4 4'}));
+    // Revealed path
+    const rev=gradeCoords.slice(0,hlIdx+1);
+    if(rev.length>=2)svg.appendChild(svgEl('path',{d:pathStr(rev),fill:'none',stroke:'#1a4f8a','stroke-width':'2.5','marker-end':'url(#arr)'}));
+    // Future path
+    const fut=gradeCoords.slice(hlIdx);
+    if(fut.length>=2)svg.appendChild(svgEl('path',{d:pathStr(fut),fill:'none',stroke:'#bbb','stroke-width':'1.5','stroke-dasharray':'5 4','marker-end':'url(#arrF)'}));
+
+    // Neighbor spokes + dots
+    curNb.forEach(w=>{
+      const nc=nbCoords[w];if(!nc)return;
+      const [nx,ny]=nc;
+      const isNew=!prevNb.has(w);
+      const drops=nextNb.size>0&&!nextNb.has(w);
+      const col=isNew?'#2e7d32':drops?'#e65100':'#e8833a';
+      svg.appendChild(svgEl('line',{x1:mx.toFixed(1),y1:my.toFixed(1),x2:nx.toFixed(1),y2:ny.toFixed(1),stroke:col,'stroke-width':'1','stroke-dasharray':'3 2',opacity:'.4'}));
+      const nd=svgEl('circle',{cx:nx.toFixed(1),cy:ny.toFixed(1),r:'8',fill:col,stroke:'#fff','stroke-width':'1.8',cursor:'pointer'});
+      nd.addEventListener('click',e=>{e.stopPropagation();setProgWordAndSearch(w);});
+      nd.appendChild(Object.assign(svgEl('title',{})));
+      nd.querySelector('title').textContent=`${w} — click to explore`;
+      svg.appendChild(nd);
+      const anchor=nx>W*.6?'end':'start';
+      const lx=(nx+(anchor==='end'?-12:12)).toFixed(1);
+      const nl=svgEl('text',{x:lx,y:(ny-3).toFixed(1),'font-size':'9',fill:col,'text-anchor':anchor,'paint-order':'stroke fill',stroke:'#fff','stroke-width':'2.5',cursor:'pointer'});
+      nl.textContent=w;nl.addEventListener('click',()=>setProgWordAndSearch(w));svg.appendChild(nl);
+    });
+
+    // Faint past nodes
+    gradeCoords.forEach(([cx,cy],i)=>{
+      if(i===hlIdx)return;
+      const fd=svgEl('circle',{cx:cx.toFixed(1),cy:cy.toFixed(1),r:'5',fill:'#c5d5e8',stroke:'#fff','stroke-width':'1.5',opacity:'0.6',cursor:'pointer'});
+      fd.addEventListener('click',()=>driftJump(i,q));
+      svg.appendChild(fd);
+      const gl=svgEl('text',{x:(cx+7).toFixed(1),y:(cy-2).toFixed(1),'font-size':'8',fill:'#999','paint-order':'stroke fill',stroke:'#fff','stroke-width':'2'});
+      gl.textContent=activeGrades[i].replace('Grade ','G');svg.appendChild(gl);
+    });
+
+    // Active node (large)
+    const ac=svgEl('circle',{cx:mx.toFixed(1),cy:my.toFixed(1),r:'14',fill:'#1a4f8a',stroke:'#fff','stroke-width':'3',cursor:'pointer'});
+    ac.addEventListener('click',()=>showProgGrade(g,q));
+    svg.appendChild(ac);
+    const al=svgEl('text',{x:mx.toFixed(1),y:(my+4).toFixed(1),'font-size':'9','font-weight':'700',fill:'#fff','text-anchor':'middle'});
+    al.textContent=g.replace('Grade ','G');svg.appendChild(al);
+    const fl=svgEl('text',{x:mx.toFixed(1),y:(my-19).toFixed(1),'font-size':'9',fill:'#1a4f8a','text-anchor':'middle','font-weight':'600','paint-order':'stroke fill',stroke:'#fff','stroke-width':'2.5'});
+    fl.textContent=`${freq[g]||0}×`;svg.appendChild(fl);
+  }
 }
 
-function driftNav(dir, q){
-  if(!semData) return;
-  const entry = semData.words[q]; if(!entry) return;
-  const grades = semData.grades;
-  const freq   = entry.grades || {};
-  const neighbors = entry.neighbors || {};
-  const activeGrades = grades.filter(g=>(freq[g]||0)>0||(neighbors[g]||[]).length>0);
-  driftGradeIdx = Math.max(0, Math.min(activeGrades.length-1, driftGradeIdx + dir));
-  renderDriftStep(q, entry, activeGrades);
+function driftOverview(q){
+  driftGradeIdx=-1;
+  const entry=semData&&semData.words[q];if(!entry)return;
+  renderDriftView(q,entry);
+}
+function driftNav(dir,q){
+  if(!semData)return;
+  const entry=semData.words[q];if(!entry)return;
+  const freq=entry.grades||{},nbrs=entry.neighbors||{};
+  const ag=semData.grades.filter(g=>(freq[g]||0)>0||(nbrs[g]||[]).length>0);
+  if(driftGradeIdx<0) driftGradeIdx=dir>0?0:ag.length-1;
+  else driftGradeIdx=Math.max(0,Math.min(ag.length-1,driftGradeIdx+dir));
+  renderDriftView(q,entry);
+}
+function driftJump(idx,q){
+  if(!semData||idx<0)return;
+  driftGradeIdx=idx;
+  const entry=semData.words[q];if(!entry)return;
+  renderDriftView(q,entry);
 }
 
-function driftJump(idx, q){
-  if(!semData || idx < 0) return;
-  driftGradeIdx = idx;
-  const entry = semData.words[q]; if(!entry) return;
-  const grades = semData.grades;
-  const freq   = entry.grades || {};
-  const neighbors = entry.neighbors || {};
-  const activeGrades = grades.filter(g=>(freq[g]||0)>0||(neighbors[g]||[]).length>0);
-  renderDriftStep(q, entry, activeGrades);
-}
 
 async function showProgGrade(grade, q){
   if(!pagesData) await ensurePages();
