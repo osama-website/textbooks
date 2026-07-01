@@ -446,20 +446,26 @@ let tagPageCache = [], activeTagType = 'all';
 let progViewMode = 'freq';
 let driftWords = [], activeDriftWord = null;
 
-// ── Tab switching ─────────────────────────────────────────────────────────
-function switchTab(tab){
+// ── Tab switching + browser history ──────────────────────────────────────
+function switchTab(tab, pushState=true){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('view-'+tab).classList.add('active');
-  if(tab==='grades')   initGrades();
-  if(tab==='subjects'){ backToSubjectMatrix(); initSubjects(); }
-  if(tab==='topics')   initTopics();
+  if(pushState) history.pushState({tab}, '', '#'+tab);
+  if(tab==='grades')      initGrades();
+  if(tab==='subjects'){   backToSubjectMatrix(); initSubjects(); }
+  if(tab==='topics')      initTopics();
   if(tab==='tags')        initTags();
   if(tab==='bias')        initBias();
   if(tab==='map')         initMap();
   if(tab==='progression') initProgression();
 }
+
+window.addEventListener('popstate', e=>{
+  const tab = e.state?.tab;
+  if(tab) switchTab(tab, false);
+});
 
 // ── Search ────────────────────────────────────────────────────────────────
 let searchTimer=null;
