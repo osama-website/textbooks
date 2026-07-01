@@ -204,6 +204,13 @@ table.sm-table tr:hover td{background:var(--blue-light)}
 .coword-chip{padding:3px 10px;border-radius:12px;background:var(--blue-light);color:var(--blue);font-size:.78rem;cursor:pointer}
 .coword-chip:hover{background:var(--blue);color:#fff}
 
+/* ── Map ── */
+#leaflet-map{height:520px;border-radius:var(--radius);border:1px solid var(--border)}
+#map-detail-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;max-height:520px;overflow-y:auto}
+.map-loc-name{font-weight:700;font-size:.95rem;margin-bottom:2px}
+.map-loc-meta{font-size:.78rem;color:var(--muted);margin-bottom:10px}
+.leaflet-popup-content{font-size:.82rem;line-height:1.5;min-width:160px}
+
 /* ── Misc ── */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty-icon{font-size:3rem;margin-bottom:12px}
@@ -379,17 +386,12 @@ table.sm-table tr:hover td{background:var(--blue-light)}
 
 <!-- Map -->
 <div class="view" id="view-map">
-  <div class="section-title" style="margin-bottom:8px">Pakistan Geography — Textbook Coverage</div>
-  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px">Click a region to see textbook pages that mention it.</p>
+  <div class="section-title" style="margin-bottom:4px">Geography — Textbook Coverage</div>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px">Locations extracted via NER from 11,513 OCR pages. Click a marker to explore pages.</p>
   <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start" id="map-layout">
-    <div id="map-svg-wrap" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
-      <svg viewBox="0 0 500 520" style="width:100%;display:block" id="pak-map">
-        <!-- simplified Pakistan provinces as clickable regions -->
-        <g id="map-regions"></g>
-      </svg>
-    </div>
-    <div id="map-detail" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
-      <div class="empty" style="padding:30px 10px"><div class="empty-icon">🗺️</div><div>Click a region on the map</div></div>
+    <div id="leaflet-map"></div>
+    <div id="map-detail-panel">
+      <div class="empty" style="padding:30px 10px"><div class="empty-icon">🗺️</div><div>Click a location marker</div></div>
     </div>
   </div>
 </div>
@@ -427,8 +429,10 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function mark(text, q){
   if(!q) return esc(text);
   const escaped = esc(text);
-  const words = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').split(/\s+/).filter(Boolean);
-  return escaped.replace(new RegExp(`(${words.join('|')})`, 'gi'), '<mark>$1</mark>');
+  const words = q.split(/\s+/).filter(Boolean)
+    .map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+  if(!words.length) return escaped;
+  return escaped.replace(new RegExp(`\\b(${words.join('|')})\\b`, 'gi'), '<mark>$1</mark>');
 }
 function safeId(bookId){
   return bookId.toLowerCase().replace(/[^a-z0-9_]/g, '_');
@@ -501,7 +505,8 @@ async function doSearch(q){
   if(!pagesData){ document.getElementById('search-results').innerHTML='<div class="loading">Failed to load data.</div>'; return; }
   const lq = q.toLowerCase();
   const words = lq.split(/\s+/).filter(Boolean);
-  const matches = pagesData.filter(p=>{ const t=p.text.toLowerCase(); return words.every(w=>t.includes(w)); });
+  const wordRegs = words.map(w=>new RegExp('\\b'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i'));
+  const matches = pagesData.filter(p=>wordRegs.every(r=>r.test(p.text)));
   const grades   = [...new Set(matches.map(p=>p.grade_label))].sort((a,b)=>gradeOrder(a)-gradeOrder(b));
   const subjects = [...new Set(matches.map(p=>p.subject))].sort();
   let filtered = matches;
@@ -1099,8 +1104,8 @@ function renderProgResult(q){
 
 async function showProgGrade(grade, q){
   if(!pagesData) await ensurePages();
-  const lq = q.toLowerCase();
-  const pages = pagesData.filter(p=>p.grade_label===grade && p.text.toLowerCase().includes(lq)).slice(0,20);
+  const wordReg = new RegExp('\\b'+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+  const pages = pagesData.filter(p=>p.grade_label===grade && wordReg.test(p.text)).slice(0,20);
   const el = document.getElementById('prog-grade-detail');
   if(!el) return;
   el.innerHTML = `<div class="prog-section">
@@ -1192,69 +1197,81 @@ async function searchBiasWord(w){
 }
 
 // ── Map tab ───────────────────────────────────────────────────────────────
-const PAK_REGIONS = [
-  {id:'punjab',    name:'Punjab',       keywords:['punjab','lahore','faisalabad','rawalpindi','multan','gujranwala'],   color:'#b8d4f0', cx:270, cy:180, r:70},
-  {id:'sindh',     name:'Sindh',        keywords:['sindh','karachi','hyderabad','sukkur','larkana'],                    color:'#b8e8c8', cx:230, cy:340, r:55},
-  {id:'baloch',    name:'Balochistan',  keywords:['balochistan','quetta','baloch','gwadar'],                           color:'#e8d4b0', cx:140, cy:310, r:80},
-  {id:'kpk',       name:'KPK',          keywords:['khyber','peshawar','pashtun','tribal','swat','nwfp'],               color:'#d4c8f0', cx:210, cy:130, r:55},
-  {id:'gilgit',    name:'Gilgit-Baltistan',keywords:['gilgit','baltistan','karakoram','hunza'],                       color:'#f0d4c8', cx:280, cy:60,  r:40},
-  {id:'kashmir',   name:'AJK',          keywords:['kashmir','muzaffarabad','mirpur','azad kashmir'],                   color:'#f0e8b0', cx:310, cy:120, r:35},
-  {id:'islamabad', name:'Islamabad',    keywords:['islamabad','capital territory'],                                     color:'#e0e0e0', cx:265, cy:155, r:18},
-  {id:'pakistan',  name:'Pakistan (general)', keywords:['pakistan','pakistani','national','quaid'],                    color:'#ddd',    cx:230, cy:420, r:0},
-];
-let mapPageCounts = {};
-let mapPagesData  = {};
+let leafletMap = null;
+let locationsData = null;
 
 async function initMap(){
-  if(!pagesData) await ensurePages();
-  if(!pagesData) return;
-  if(!Object.keys(mapPageCounts).length) buildMapIndex();
-  renderMap();
-}
-function buildMapIndex(){
-  PAK_REGIONS.forEach(r=>{
-    const kws = r.keywords;
-    const pages = pagesData.filter(p=>{
-      const t = p.text.toLowerCase();
-      return kws.some(k=>t.includes(k));
-    });
-    mapPageCounts[r.id] = pages.length;
-    mapPagesData[r.id]  = pages;
+  if(!locationsData){
+    locationsData = await loadJSON('tb_locations');
+  }
+  if(!locationsData || !locationsData.length){
+    document.getElementById('leaflet-map').innerHTML =
+      '<div class="empty">Location data not yet available.</div>';
+    return;
+  }
+  if(leafletMap){
+    // Re-entering tab: force tile refresh for hidden-container rendering
+    setTimeout(()=> leafletMap.invalidateSize(), 50);
+    return;
+  }
+
+  // Init Leaflet map centered on Pakistan
+  leafletMap = L.map('leaflet-map').setView([30.5, 69.5], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 18,
+  }).addTo(leafletMap);
+
+  const maxCount = Math.max(...locationsData.map(d=>d.count));
+
+  locationsData.forEach(loc=>{
+    const radius = 6 + Math.round(Math.sqrt(loc.count / maxCount) * 28);
+    const color = loc.kind==='country' ? '#1a4f8a'
+                : loc.kind==='province'? '#2e7d32'
+                : loc.kind==='river'   ? '#0277bd'
+                : '#b85c00';
+
+    const circle = L.circleMarker([loc.lat, loc.lng], {
+      radius, color, fillColor: color,
+      fillOpacity: 0.55, weight: 1.5, opacity: 0.9,
+    }).addTo(leafletMap);
+
+    const topSubj = Object.entries(loc.subjects||{})
+      .sort((a,b)=>b[1]-a[1]).slice(0,3)
+      .map(([s,n])=>`${s} (${n})`).join(', ');
+
+    circle.bindTooltip(
+      `<strong>${loc.canonical}</strong><br>${loc.count} pages<br><em>${topSubj}</em>`,
+      {direction:'top', className:'leaflet-tooltip'}
+    );
+
+    circle.on('click', ()=> showMapLocation(loc));
   });
 }
-function renderMap(){
-  const maxCount = Math.max(1,...Object.values(mapPageCounts));
-  const g = document.getElementById('map-regions');
-  g.innerHTML = PAK_REGIONS.filter(r=>r.r>0).map(r=>{
-    const count = mapPageCounts[r.id]||0;
-    const intensity = count/maxCount;
-    const baseColor = r.color;
-    const opacity = 0.4 + intensity*0.5;
-    return `<g onclick="showMapRegion('${r.id}')" style="cursor:pointer">
-      <circle cx="${r.cx}" cy="${r.cy}" r="${r.r}" fill="${baseColor}" stroke="#888" stroke-width="1.5" opacity="${opacity.toFixed(2)}"/>
-      <circle cx="${r.cx}" cy="${r.cy}" r="${r.r}" fill="transparent" stroke="var(--blue)" stroke-width="0" class="map-hover-ring"/>
-      <text x="${r.cx}" y="${r.cy-4}" text-anchor="middle" font-size="11" font-weight="600" fill="#333">${r.name}</text>
-      <text x="${r.cx}" y="${r.cy+12}" text-anchor="middle" font-size="10" fill="#555">${count} pages</text>
-    </g>`;
-  }).join('');
-  // Add Pakistan outline label
-  g.insertAdjacentHTML('beforeend', `<text x="250" y="490" text-anchor="middle" font-size="11" fill="var(--muted)" font-style="italic">Click a region to explore pages</text>`);
-}
-function showMapRegion(id){
-  const region = PAK_REGIONS.find(r=>r.id===id);
-  if(!region) return;
-  const pages = (mapPagesData[id]||[]).slice(0,40);
-  const detail = document.getElementById('map-detail');
-  detail.innerHTML = `
-    <div style="font-weight:700;font-size:.95rem;margin-bottom:4px">${region.name}</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">${mapPageCounts[id]||0} pages mention this region</div>
-    ${pages.map(p=>`<div class="page-card" onclick="openBookAtPage('${p.book_id}',${p.id})" style="margin-bottom:8px">
-      <div class="page-card-meta">
-        <span class="badge badge-grade">${esc(p.grade_label)}</span>
-        <span class="badge badge-subject">${esc(p.subject)}</span>
-      </div>
-      <div class="page-card-text">${esc(p.text.slice(0,150))}</div>
-    </div>`).join('') || '<div class="empty">No pages found.</div>'}`;
+
+function showMapLocation(loc){
+  const panel = document.getElementById('map-detail-panel');
+  const gradeRows = Object.entries(loc.grades||{})
+    .sort((a,b)=>gradeOrder(a[0])-gradeOrder(b[0]))
+    .map(([g,n])=>`<span class="badge badge-grade">${esc(g)}: ${n}</span>`).join(' ');
+  const subjRows = Object.entries(loc.subjects||{})
+    .sort((a,b)=>b[1]-a[1]).slice(0,5)
+    .map(([s,n])=>`<span class="badge badge-subject">${esc(s)} ${n}</span>`).join(' ');
+
+  panel.innerHTML = `
+    <div class="map-loc-name">${esc(loc.canonical)}</div>
+    <div class="map-loc-meta">${loc.count} page mentions · ${loc.kind}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">${subjRows}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${gradeRows}</div>
+    <div style="font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:6px">Sample pages</div>
+    ${(loc.pages||[]).slice(0,20).map(p=>`
+      <div class="page-card" onclick="openBookAtPage('${esc(p.book_id)}',${p.id})" style="margin-bottom:8px">
+        <div class="page-card-meta">
+          <span class="badge badge-grade">${esc(p.grade_label)}</span>
+          <span class="badge badge-subject">${esc(p.subject)}</span>
+        </div>
+        <div class="page-card-text">${esc(p.snippet||'')}</div>
+      </div>`).join('') || '<div class="empty">No pages found.</div>'}`;
 }
 
 // ── Data loaders ──────────────────────────────────────────────────────────
