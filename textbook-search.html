@@ -1047,6 +1047,7 @@ function setProgView(mode){
   if(q && semData) renderProgResult(q);
 }
 
+
 function setProgWordAndSearch(w){
   activeDriftWord = w;
   document.getElementById('prog-input').value = w;
@@ -1065,13 +1066,68 @@ async function searchProg(){
   }
   document.getElementById('prog-empty').style.display='none';
   if(!semData){ document.getElementById('prog-result').innerHTML='<div class="empty">Data not available.</div>'; return; }
-  renderProgResult(q);
+  await renderProgResult(q);
+}
+
+async function renderProgResult(q){
+  const entry = semData.words[q];
+  if(!entry){
+    document.getElementById('prog-result').innerHTML=`<div class="empty"><div class="empty-icon">🔎</div>No data for "<strong>${esc(q)}</strong>" — try a more common word.</div>`;
+    return;
+  }
+  if(progViewMode==='drift'){
+    document.getElementById('prog-result').innerHTML='<div class="loading"><span class="spinner"></span>Loading UMAP…</div>';
+    await renderDriftView(q, entry);
+    return;
+  }
+  const grades = semData.grades;
+  const freq   = entry.grades || {};
+  const maxF   = Math.max(1,...Object.values(freq));
+  let chartHtml = '';
+  if(progViewMode==='freq'){
+    const bars = grades.map(g=>{
+      const count = freq[g]||0;
+      const h = Math.max(2, Math.round(count/maxF*100));
+      return `<div class="prog-bar-wrap">
+        <div class="prog-bar-val">${count||''}</div>
+        <div class="prog-bar" style="height:${h}px" title="${g}: ${count} times" onclick="showProgGrade('${g}','${q}')"></div>
+        <div class="prog-bar-label">${esc(g.replace('Grade ','G'))}</div>
+      </div>`;
+    }).join('');
+    chartHtml = `<div class="prog-chart">${bars}</div>`;
+  } else {
+    const W=560, H=140, padL=30, padR=10, padT=10, padB=30;
+    const pts = grades.map((g,i)=>({ x:padL+(W-padL-padR)*i/(grades.length-1), y:padT+(H-padT-padB)*(1-(freq[g]||0)/maxF), g, v:freq[g]||0 }));
+    const pathD = pts.map((p,i)=>(i===0?'M':'L')+`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const dots = pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${p.v?'var(--blue-mid)':'var(--border)'}" stroke="${p.v?'var(--blue)':'#ccc'}" stroke-width="1.5" style="cursor:pointer" onclick="showProgGrade('${p.g}','${q}')" title="${p.g}: ${p.v}"><title>${p.g}: ${p.v} occurrences</title></circle>`).join('');
+    const labels = pts.map(p=>`<text x="${p.x.toFixed(1)}" y="${(H-padB+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)">${p.g.replace('Grade ','G')}</text>`).join('');
+    const vals = pts.filter(p=>p.v>0).map(p=>`<text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--blue)" font-weight="600">${p.v}</text>`).join('');
+    chartHtml = `<div class="prog-line-wrap"><svg id="prog-line-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+      <path d="${pathD}" fill="none" stroke="var(--blue-mid)" stroke-width="2" opacity=".7"/>
+      <path d="${pathD} L${pts[pts.length-1].x.toFixed(1)},${(H-padB).toFixed(1)} L${pts[0].x.toFixed(1)},${(H-padB).toFixed(1)} Z" fill="var(--blue-mid)" opacity=".08"/>
+      ${dots}${vals}${labels}
+    </svg></div>`;
+  }
+  const coSections = grades.filter(g=>(freq[g]||0)>0).map(g=>{
+    const cowords = (entry.neighbors?.[g]||[]).slice(0,10);
+    if(!cowords.length) return '';
+    const chips = cowords.map(w=>`<span class="coword-chip" onclick="setProgWordAndSearch('${esc(w)}')">${esc(w)}</span>`).join('');
+    return `<div style="margin-bottom:8px"><span style="font-size:.75rem;font-weight:600;color:var(--muted);margin-right:8px">${esc(g)}</span>${chips}</div>`;
+  }).join('');
+  document.getElementById('prog-result').innerHTML = `
+    <div class="prog-section">
+      <h3>"${esc(q)}" — ${entry.freq} total occurrences across grades</h3>
+      ${chartHtml}
+    </div>
+    ${coSections?`<div class="prog-section"><h3>Related words by grade — click to explore</h3>${coSections}</div>`:''}
+    <div id="prog-grade-detail"></div>`;
 }
 
 let driftGradeIdx = -1; // -1 = overview
 let driftWord = null;
+let umapData = null;
 
-// ── In-browser PCA (power iteration, top 2 PCs) ────────────────────
+// ── Fallback in-browser PCA (used if UMAP not yet loaded) ──────────
 function pca2D(matrix){
   const n=matrix.length, d=matrix[0].length;
   if(n<2||d<2) return matrix.map((_,i)=>[i/(n||1)*2-1,0]);
@@ -1095,7 +1151,23 @@ function pca2D(matrix){
   return matrix.map((_,i)=>[pc1.scores[i],pc2.scores[i]]);
 }
 
-function renderDriftView(q, entry){
+async function ensureUmap(){
+  if(umapData) return;
+  umapData = await loadJSON('tb_umap');
+}
+
+function scaleCoords(rawCoords, W, H, PAD){
+  const xs=rawCoords.map(c=>c[0]),ys=rawCoords.map(c=>c[1]);
+  const mnX=Math.min(...xs),mxX=Math.max(...xs),mnY=Math.min(...ys),mxY=Math.max(...ys);
+  const rX=(mxX-mnX)||1,rY=(mxY-mnY)||1,pd=.11;
+  return rawCoords.map(([x,y])=>[
+    PAD+((x-mnX)/rX*(1-2*pd)+pd)*(W-2*PAD),
+    H-PAD-((y-mnY)/rY*(1-2*pd)+pd)*(H-2*PAD)
+  ]);
+}
+
+async function renderDriftView(q, entry){
+  await ensureUmap();
   const allGrades=semData.grades;
   const freq=entry.grades||{}, neighbors=entry.neighbors||{};
   const activeGrades=allGrades.filter(g=>(freq[g]||0)>0||(neighbors[g]||[]).length>0);
@@ -1106,31 +1178,53 @@ function renderDriftView(q, entry){
   driftWord=q;
   if(driftGradeIdx>=activeGrades.length) driftGradeIdx=-1;
 
-  // Build vocab + PCA coords
-  const vocab=[...new Set(activeGrades.flatMap(g=>neighbors[g]||[]))];
-  const vIdx=Object.fromEntries(vocab.map((w,i)=>[w,i]));
-  const matrix=activeGrades.map(g=>{
-    const v=new Array(vocab.length).fill(0);
-    (neighbors[g]||[]).forEach(w=>{if(vIdx[w]!=null)v[vIdx[w]]=1;});
-    return v;
-  });
-  const raw=pca2D(matrix);
   const W=640,H=370,PAD=52;
-  const xs=raw.map(c=>c[0]),ys=raw.map(c=>c[1]);
-  const mnX=Math.min(...xs),mxX=Math.max(...xs),mnY=Math.min(...ys),mxY=Math.max(...ys);
-  const rX=(mxX-mnX)||1,rY=(mxY-mnY)||1,pd=.11;
-  const toS=([x,y])=>[
-    PAD+((x-mnX)/rX*(1-2*pd)+pd)*(W-2*PAD),
-    H-PAD-((y-mnY)/rY*(1-2*pd)+pd)*(H-2*PAD)
-  ];
-  const gradeCoords=raw.map(toS);
-  const nbCoords={};
-  vocab.forEach(w=>{
-    const gi=activeGrades.map((g,i)=>((neighbors[g]||[]).includes(w)?i:-1)).filter(i=>i>=0);
-    if(!gi.length)return;
-    nbCoords[w]=[gi.reduce((s,i)=>s+gradeCoords[i][0],0)/gi.length,
-                 gi.reduce((s,i)=>s+gradeCoords[i][1],0)/gi.length];
-  });
+  let gradeCoords, nbCoords={}, usingUmap=false;
+
+  const wordUmap = umapData && umapData.words && umapData.words[q];
+  if(wordUmap && activeGrades.filter(g=>wordUmap[g]).length >= 2){
+    // Use precomputed UMAP coords — grades that have UMAP coords
+    usingUmap=true;
+    const raw=activeGrades.map(g=>wordUmap[g]||null).filter(Boolean);
+    const rawFull=activeGrades.map(g=>wordUmap[g]||[0,0]);
+    gradeCoords=scaleCoords(rawFull, W, H, PAD);
+    // Neighbor positions: from UMAP coords of the neighbor words at this grade
+    const vocab=[...new Set(activeGrades.flatMap(g=>neighbors[g]||[]))];
+    vocab.forEach(w=>{
+      const wCoords=umapData.words[w];
+      if(!wCoords) return;
+      const gi=activeGrades.filter(g=>wCoords[g]);
+      if(!gi.length) return;
+      const raw2=gi.map(g=>wCoords[g]);
+      const sx=gi.reduce((s,g)=>s+wCoords[g][0],0)/gi.length;
+      const sy=gi.reduce((s,g)=>s+wCoords[g][1],0)/gi.length;
+      // Scale using same transform as grade coords
+      const xs2=rawFull.map(c=>c[0]),ys2=rawFull.map(c=>c[1]);
+      const mnX=Math.min(...xs2),mxX=Math.max(...xs2),mnY=Math.min(...ys2),mxY=Math.max(...ys2);
+      const rX=(mxX-mnX)||1,rY=(mxY-mnY)||1,pd=.11;
+      nbCoords[w]=[
+        PAD+((sx-mnX)/rX*(1-2*pd)+pd)*(W-2*PAD),
+        H-PAD-((sy-mnY)/rY*(1-2*pd)+pd)*(H-2*PAD)
+      ];
+    });
+  } else {
+    // Fallback: in-browser PCA on neighbor sets
+    const vocab=[...new Set(activeGrades.flatMap(g=>neighbors[g]||[]))];
+    const vIdx=Object.fromEntries(vocab.map((w,i)=>[w,i]));
+    const matrix=activeGrades.map(g=>{
+      const v=new Array(vocab.length).fill(0);
+      (neighbors[g]||[]).forEach(w=>{if(vIdx[w]!=null)v[vIdx[w]]=1;});
+      return v;
+    });
+    const raw=pca2D(matrix);
+    gradeCoords=scaleCoords(raw, W, H, PAD);
+    vocab.forEach(w=>{
+      const gi=activeGrades.map((g,i)=>((neighbors[g]||[]).includes(w)?i:-1)).filter(i=>i>=0);
+      if(!gi.length)return;
+      nbCoords[w]=[gi.reduce((s,i)=>s+gradeCoords[i][0],0)/gi.length,
+                   gi.reduce((s,i)=>s+gradeCoords[i][1],0)/gi.length];
+    });
+  }
 
   const pips=allGrades.map(g=>{
     const hi=activeGrades.includes(g);
